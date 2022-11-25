@@ -19,11 +19,7 @@ TIME=1
 FPS=8
 MAX_FRAMES=1
 RES="224 224"
-CAMERAS="cam_1 cam_2 cam_3 \
-    cam_4 cam_5 cam_6 \
-    cam_7 cam_8 cam_9 \
-    cam_10 cam_11 cam_12 \
-    cam_13 cam_14 cam_15 cam_16"
+CAMERAS="cam_1 cam_2 cam_3"
 FORMAT="depth"
 
 # helper functions
@@ -43,8 +39,8 @@ create_params()
 ###
 
 # directory setup
-mkdir ${DATASET_ROOT_DIR}
-mkdir ${RECORD_ROOT_DIR}
+# mkdir ${DATASET_ROOT_DIR}
+# mkdir ${RECORD_ROOT_DIR}
 
 # main loop over all simulation environments to record
 for env_file in `ls ${MJCF_ROOT_DIR} | grep env_ | grep ${FILTER}`; do

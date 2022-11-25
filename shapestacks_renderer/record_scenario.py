@@ -16,6 +16,8 @@ import math
 import random
 import re
 import xml.etree.ElementTree as ET
+import h5py
+import tqdm
 
 import numpy as np
 import scipy.misc
@@ -27,8 +29,11 @@ sys.path.insert(0, os.environ['SHAPESTACKS_CODE_HOME'])
 from utilities.mujoco_utils import mjsim_mat_id2name
 from shapestacks_renderer.rendering_constants import OBJ_COLORS_RGBA, VSEG_COLOR_CODES, \
   ISEG_COLOR_CODES
+import matplotlib
+matplotlib.use('TkAgg')
 
 
+EPS = np.finfo(float).eps * 4.
 # ---------- command line arguments ----------
 ARGPARSER = argparse.ArgumentParser(
     description='Record a ShapeStacks scenario as a MuJoCo simulation.')
@@ -101,6 +106,30 @@ ARGPARSER.add_argument(
 BURN_IN_STEPS = 50 # 'burn-in' steps for simulation to reach a stable state
 VELOCITY_TOLERANCE = 0.2 # velocities below this threshold are considered 'no movement'
 
+def quat2mat(quaternion):
+    """
+    Converts given quaternion to matrix.
+    Args:
+        quaternion (np.array): (x,y,z,w) vec4 float angles
+    Returns:
+        np.array: 3x3 rotation matrix
+    """
+    # awkward semantics for use with numba
+    inds = np.array([3, 0, 1, 2])
+    q = np.asarray(quaternion).copy().astype(np.float32)[inds]
+
+    n = np.dot(q, q)
+    if n < EPS:
+        return np.identity(3)
+    q *= math.sqrt(2.0 / n)
+    q2 = np.outer(q, q)
+    return np.array(
+        [
+            [1.0 - q2[2, 2] - q2[3, 3], q2[1, 2] - q2[3, 0], q2[1, 3] + q2[2, 0]],
+            [q2[1, 2] + q2[3, 0], 1.0 - q2[1, 1] - q2[3, 3], q2[2, 3] - q2[1, 0]],
+            [q2[1, 3] - q2[2, 0], q2[2, 3] + q2[1, 0], 1.0 - q2[1, 1] - q2[2, 2]],
+        ]
+    )
 
 # ---------- helper functions ----------
 
@@ -292,6 +321,93 @@ def _render_rgb(
       lm.set_active(light_name, 1)
   return frame
 
+def _convert_depth_to_meters(sim, depth):
+    extent = sim.model.stat.extent
+    near = sim.model.vis.map.znear * extent
+    far = sim.model.vis.map.zfar * extent
+    image = near / (1 - depth * (1 - near / far))
+    return image
+
+def _create_uniform_pixel_coords_image(resolution: np.ndarray):
+    pixel_x_coords = np.reshape(
+        np.tile(np.arange(resolution[1]), [resolution[0]]),
+        (resolution[0], resolution[1], 1)).astype(np.float32)
+    pixel_y_coords = np.reshape(
+        np.tile(np.arange(resolution[0]), [resolution[1]]),
+        (resolution[1], resolution[0], 1)).astype(np.float32)
+    pixel_y_coords = np.transpose(pixel_y_coords, (1, 0, 2))
+    uniform_pixel_coords = np.concatenate(
+        (pixel_x_coords, pixel_y_coords, np.ones_like(pixel_x_coords)), -1)
+    return uniform_pixel_coords
+
+def _transform(coords, trans):
+    h, w = coords.shape[:2]
+    coords = np.reshape(coords, (h * w, -1))
+    coords = np.transpose(coords, (1, 0))
+    transformed_coords_vector = np.matmul(trans, coords)
+    transformed_coords_vector = np.transpose(
+        transformed_coords_vector, (1, 0))
+    return np.reshape(transformed_coords_vector,
+                      (h, w, -1))
+
+def _pixel_to_world_coords(pixel_coords, cam_proj_mat_inv):
+    h, w = pixel_coords.shape[:2]
+    pixel_coords = np.concatenate(
+        [pixel_coords, np.ones((h, w, 1))], -1)
+    world_coords = _transform(pixel_coords, cam_proj_mat_inv)
+    world_coords_homo = np.concatenate(
+        [world_coords, np.ones((h, w, 1))], axis=-1)
+    return world_coords_homo
+
+def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
+                                camera: str, render_height: int, render_width: int,
+                                world_xml: ET.Element,
+                                depth: np.array):
+    camera_id = sim.model.camera_name2id(camera)
+    fovy = sim.model.cam_fovy[camera_id]
+    f = 0.5 * render_height / math.tan(fovy * math.pi / 360)
+    intrinsics = np.array(((-f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+    # intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+
+    cm = CameraModder(sim)
+
+    cam_pos = cm.get_pos(camera)
+    cam_quat = cm.get_quat(camera)
+    mat = quat2mat(cam_quat)
+    extrinsics = np.concatenate([mat, cam_pos[:, None]], axis=1)
+    real_depth = _convert_depth_to_meters(sim, depth)
+    upc = _create_uniform_pixel_coords_image(real_depth.shape)
+    pc = upc * np.expand_dims(real_depth, -1)
+    C = np.expand_dims(extrinsics[:3, 3], 0).T
+    R = extrinsics[:3, :3]
+    R_inv = R.T  # inverse of rot matrix is transpose
+    R_inv_C = np.matmul(R_inv, C)
+    extrinsics = np.concatenate((R_inv, -R_inv_C), -1)
+    cam_proj_mat = np.matmul(intrinsics, extrinsics)
+    cam_proj_mat_homo = np.concatenate(
+        [cam_proj_mat, [np.array([0, 0, 0, 1])]])
+    cam_proj_mat_inv = np.linalg.inv(cam_proj_mat_homo)[0:3]
+    world_coords_homo = np.expand_dims(_pixel_to_world_coords(
+        pc, cam_proj_mat_inv), 0)
+    world_coords = world_coords_homo[..., :-1][0]
+
+    import pdb
+    pdb.set_trace()
+    x = world_coords[:, :, 0]
+    y = world_coords[:, :, 1]
+    z = world_coords[:, :, 2]
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import proj3d
+
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
+    plt.show()
+
+    return world_coords
+
 def _render_seg(sim: mujoco_py.MjSim, camera: str, render_height: int, render_width: int, world_xml: ET.Element):
   lm = LightModder(sim)
   # switch all lights off
@@ -406,8 +522,10 @@ if __name__ == '__main__':
 
   # run simulation and record screenshots
   stack_collapsed = False
-  for i in range(total_steps):
-
+  pcds = {}
+  for camera in FLAGS.cameras:
+      pcds[camera] = []
+  for i in tqdm.tqdm(range(total_steps)):
     if i % snapshot_interval == 0 and i // snapshot_interval < FLAGS.max_frames:
       frame_nr = i // snapshot_interval
       for modality in FLAGS.formats:
@@ -437,6 +555,10 @@ if __name__ == '__main__':
             scipy.misc.imsave(
                 os.path.join(FLAGS.record_path, frame_fn),
                 frame_stereo)
+          if modality == 'depth':
+            pcd = _convert_rgbd_to_pointcloud(sim, camera, render_height,
+                                    render_width, world_xml, frame_mono)
+            pcds[camera].append(pcd)
 
     if not stack_collapsed and i > BURN_IN_STEPS:
       velocities = np.abs(sim.data.sensordata)
@@ -445,6 +567,11 @@ if __name__ == '__main__':
 
     for modality in FLAGS.formats:
       render_sims[modality].step()
+
+  with h5py.File(os.path.join(FLAGS.record_path, 'data.h5'), 'w') as F:
+    F['stability'] = not stack_collapsed
+    for camera in FLAGS.cameras:
+        F[camera+'/pcd'] = np.array(pcds[camera])
 
   # print results
   print("Stack collapse: %s" % stack_collapsed)

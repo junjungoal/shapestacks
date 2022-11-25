@@ -115,27 +115,27 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 10
+PLANE_L = 100
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
-    'wall_1',
-    'wall_2',
+    # 'wall_1',
+    # 'wall_2',
 ]
 PLANE_POSITIONS = [
     (0, 0, 0),                # ground plate
-    (0, PLANE_L, PLANE_L),    # wall 1
-    (PLANE_L, 0, PLANE_L),    # wall 2
+    # (0, PLANE_L, PLANE_L),    # wall 1
+    # (PLANE_L, 0, PLANE_L),    # wall 2
 ]
 PLANE_SIZES = [
     (PLANE_L, PLANE_L, PLANE_H),    # ground plate
-    (PLANE_L, PLANE_L, PLANE_H),    # wall 1
-    (PLANE_L, PLANE_L, PLANE_H),    # wall 2
+    # (PLANE_L, PLANE_L, PLANE_H),    # wall 1
+    # (PLANE_L, PLANE_L, PLANE_H),    # wall 2
 ]
 PLANE_EULERS = [
     (0, 0, 0),      # ground plate
-    (90, 180, 0),   # wall 1
-    (270, 0, 90),   # wall 2
+    # (90, 180, 0),   # wall 1
+    # (270, 0, 90),   # wall 2
 ]
 
 # objects
@@ -191,6 +191,7 @@ CAMERA_POSITIONS = [
     (-5, 5, 9),   # cam_14: corner 2
     (5, 5, 9),    # cam_15: corner 3
     (5, -5, 9),   # cam_16: corner 4
+    (0, -30, 15)
 ]
 CAMERA_EULERS = [
     # corner 1
@@ -214,6 +215,7 @@ CAMERA_EULERS = [
     (45, 0, 225),
     (45, 0, 135),
     (45, 0, 45),
+    (60, 0, 0),
 ]
 # CAMLIGHT_DIRECTIONS = [
 #     (8, 8, -3),
@@ -241,8 +243,11 @@ def create_materials(ab: MjAssetBuilder):
       mat = MjMaterial()
       mat.name = 'mat_' + tex_name.lstrip('tex_')
       mat.texture = tex_name
-      # if tex_cat == 'floor':
-      #     mat.texuniform = "true"
+      # import pdb
+      # pdb.set_trace()
+      if tex_cat == 'floor':
+          mat.texrepeat = [100, 100]
+          mat.texuniform = 0
       # mat.texuniform = "true"
       ab.add_asset(mat)
 
