@@ -131,6 +131,20 @@ def quat2mat(quaternion):
         ]
     )
 
+def make_pose(translation, rotation):
+    """
+    Makes a homogeneous pose matrix from a translation vector and a rotation matrix.
+    Args:
+        translation (np.array): (x,y,z) translation value
+        rotation (np.array): a 3x3 matrix representing rotation
+    Returns:
+        pose (np.array): a 4x4 homogeneous matrix
+    """
+    pose = np.zeros((4, 4))
+    pose[:3, :3] = rotation
+    pose[:3, 3] = translation
+    pose[3, 3] = 1.0
+    return pose
 # ---------- helper functions ----------
 
 def _get_cam_light_name(camera_name: str) -> str:
@@ -155,7 +169,7 @@ def _init_scene_rgb(
   # set main light to cast shadow
   lm = mujoco_py.modder.LightModder(sim)
   light_name = _get_main_light_name(lightid)
-  lm.set_castshadow(light_name, 1)
+  # lm.set_castshadow(light_name, 1)
 
   # find materials
   mat_id2name = mjsim_mat_id2name(sim)
@@ -164,11 +178,12 @@ def _init_scene_rgb(
   mat_wall_id2name = dict(
       filter(lambda t: t[1].startswith('mat_wall_'), mat_id2name.items()))
   matid_floortex = sorted(mat_floor_id2name.items(), key=lambda t: t[0])[floortex][0]
-  matid_walltex = sorted(mat_wall_id2name.items(), key=lambda t: t[0])[walltex][0]
+  # matid_walltex = sorted(mat_wall_id2name.items(), key=lambda t: t[0])[walltex][0]
 
   # set wall and floor materials
   for plane, matid in [
-      ('floor', matid_floortex), ('wall_1', matid_walltex), ('wall_2', matid_walltex)]:
+      ('floor', matid_floortex)]:
+      # ('floor', matid_floortex), ('wall_1', matid_walltex), ('wall_2', matid_walltex)]:
     geom_id = sim.model.geom_name2id(plane)
     sim.model.geom_matid[geom_id] = matid
 
@@ -256,7 +271,8 @@ def _setup_render_rgb(sim: mujoco_py.MjSim) -> mujoco_py.MjSim:
   # flags defined in mjvisualize.h
   render_sim = mujoco_py.MjSim(sim.model)
   render_sim.set_state(sim.get_state())
-  render_ctx = mujoco_py.MjRenderContextOffscreen(render_sim)
+  render_ctx = mujoco_py.MjRenderContextOffscreen(render_sim, device_id=0)
+  # render_ctx = mujoco_py.MjViewer(render_sim)
   render_ctx.scn.stereo = 2 # side-by-side rendering
   return render_sim
 
@@ -310,8 +326,8 @@ def _render_rgb(
   # lights off for all other cameras except the recording one
   for cam in cam_names:
     light_name = _get_cam_light_name(cam)
-    if light_name in sim.model.light_names:
-      lm.set_active(light_name, 1 if cam == camera else 0)
+    # if light_name in sim.model.light_names:
+    #   lm.set_active(light_name, 1 if cam == camera else 0)
   # take screenshot
   frame = sim.render(render_width * 2, render_height, camera_name=camera)
   # reset camera lights
@@ -365,16 +381,25 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
                                 depth: np.array):
     camera_id = sim.model.camera_name2id(camera)
     fovy = sim.model.cam_fovy[camera_id]
-    f = 0.5 * render_height / math.tan(fovy * math.pi / 360)
-    intrinsics = np.array(((-f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
-    # intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+    f = 0.5*render_height / (math.tan(fovy * np.pi/360))
+    # intrinsics = np.array(((-f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+    intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
 
     cm = CameraModder(sim)
 
     cam_pos = cm.get_pos(camera)
     cam_quat = cm.get_quat(camera)
-    mat = quat2mat(cam_quat)
-    extrinsics = np.concatenate([mat, cam_pos[:, None]], axis=1)
+    # mat = quat2mat(cam_quat)
+    mat = quat2mat(np.array([*cam_quat[1:], cam_quat[0]]))
+    extrinsics = make_pose(cam_pos, mat)
+    # extrinsics = np.concatenate([mat, cam_pos[:, None]], axis=1)
+    camera_axis_correction = np.array(
+        [[1.0, 0.0, 0.0, 0.0], [0.0, -1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
+    )
+    extrinsics = extrinsics @ camera_axis_correction
+
+
+    # real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=0))
     real_depth = _convert_depth_to_meters(sim, depth)
     upc = _create_uniform_pixel_coords_image(real_depth.shape)
     pc = upc * np.expand_dims(real_depth, -1)
@@ -391,20 +416,18 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
         pc, cam_proj_mat_inv), 0)
     world_coords = world_coords_homo[..., :-1][0]
 
-    import pdb
-    pdb.set_trace()
-    x = world_coords[:, :, 0]
-    y = world_coords[:, :, 1]
-    z = world_coords[:, :, 2]
-
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import proj3d
-
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111, projection='3d')
-
-    ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
-    plt.show()
+    # x = world_coords[:, :, 0]
+    # y = world_coords[:, :, 1]
+    # z = world_coords[:, :, 2]
+    #
+    # import matplotlib.pyplot as plt
+    # from mpl_toolkits.mplot3d import proj3d
+    #
+    # fig = plt.figure(figsize=(8, 8))
+    # ax = fig.add_subplot(111, projection='3d')
+    #
+    # ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
+    # plt.show()
 
     return world_coords
 
@@ -412,8 +435,8 @@ def _render_seg(sim: mujoco_py.MjSim, camera: str, render_height: int, render_wi
   lm = LightModder(sim)
   # switch all lights off
   light_names = [l.attrib['name'] for l in world_xml.findall(".//light")]
-  for light_name in light_names:
-    lm.set_active(light_name, 0)
+  # for light_name in light_names:
+  #   lm.set_active(light_name, 0)
   # take screenshot
   frame = sim.render(render_width * 2, render_height, camera_name=camera)
   # reset lights

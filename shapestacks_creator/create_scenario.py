@@ -17,7 +17,7 @@ from simulation_builder.world_builder import MjWorldBuilder
 from simulation_builder.asset_builder import MjAssetBuilder
 from simulation_builder.mj_schema import MjcfFormat
 from simulation_builder.mj_elements import MjVelocimeter, MjLight, MjCamera, \
-  MjMaterial, MjGeom
+  MjMaterial, MjGeom, MjBody
 from simulation_builder.mj_templates import MjCuboid, MjCylinder, MjSphere, \
   MjCameraHeadlight
 
@@ -191,7 +191,7 @@ CAMERA_POSITIONS = [
     (-5, 5, 9),   # cam_14: corner 2
     (5, 5, 9),    # cam_15: corner 3
     (5, -5, 9),   # cam_16: corner 4
-    (0, -30, 15)
+    (0, 8, 9)
 ]
 CAMERA_EULERS = [
     # corner 1
@@ -215,7 +215,7 @@ CAMERA_EULERS = [
     (45, 0, 225),
     (45, 0, 135),
     (45, 0, 45),
-    (60, 0, 0),
+    (45, 0, -180),
 ]
 # CAMLIGHT_DIRECTIONS = [
 #     (8, 8, -3),
@@ -243,8 +243,6 @@ def create_materials(ab: MjAssetBuilder):
       mat = MjMaterial()
       mat.name = 'mat_' + tex_name.lstrip('tex_')
       mat.texture = tex_name
-      # import pdb
-      # pdb.set_trace()
       if tex_cat == 'floor':
           mat.texrepeat = [100, 100]
           mat.texuniform = 0
@@ -560,10 +558,17 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   Inserts the static cameras.
   """
   # camera
+  # body = MjBody()
+  # body.pos = MjcfFormat.tuple(CAMERA_POSITIONS[cam_id])
+  # body.euler = MjcfFormat.tuple(CAMERA_EULERS[cam_id])
+
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
   cam.pos = MjcfFormat.tuple(CAMERA_POSITIONS[cam_id])
   cam.euler = MjcfFormat.tuple(CAMERA_EULERS[cam_id])
+  cam.fovy='45'
+  # body.add_child_elem(cam)
+  # wb.insert_static(body)
   wb.insert_static_camera(cam)
   # camera headlight
   # if with_headlight:
