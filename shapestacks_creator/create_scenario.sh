@@ -10,7 +10,7 @@ echo "Recording ShapeStacks scenarios from MuJoCo."
 
 # recording options
 # TIME=4
-MAX_HEIGHT=6
+MAX_HEIGHT=3
 COLOR_MODE="original"
 
 # helper functions
@@ -47,7 +47,7 @@ create_params()
 # main loop over all simulation environments to record
 
 i=0
-while [ $i -ne 8000 ]
+while [ $i -ne 6000 ]
 do
         params=$(create_params $i)
         python create_scenario.py ${params}

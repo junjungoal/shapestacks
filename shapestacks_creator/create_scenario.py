@@ -46,10 +46,10 @@ ARGPARSER.add_argument(
     '--shapes', type=str, nargs='+', default=['cuboid', 'cylinder', 'sphere'],
     help="The available shapes for stacking.")
 ARGPARSER.add_argument(
-    '--obj_dim_min', type=float, default=0.5,
+    '--obj_dim_min', type=float, default=0.1,
     help="Minimum size per object dimension.")
 ARGPARSER.add_argument(
-    '--obj_dim_max', type=float, default=1.0,
+    '--obj_dim_max', type=float, default=0.15,
     help="Maximum size per object dimension.")
 ARGPARSER.add_argument(
     '--height', type=int, default=6,
@@ -115,7 +115,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 100
+PLANE_L = 3
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -150,7 +150,8 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 2.0
+# ORIGIN_OFFSET_MAX = 2.0
+ORIGIN_OFFSET_MAX = 0.25
 
 # light setup
 LIGHT_POSITIONS = [
@@ -191,7 +192,8 @@ CAMERA_POSITIONS = [
     (-5, 5, 9),   # cam_14: corner 2
     (5, 5, 9),    # cam_15: corner 3
     (5, -5, 9),   # cam_16: corner 4
-    (0, 8, 9)
+    # (0, 1.0, 0.9)
+    (0, 1.3, 1.1)
 ]
 CAMERA_EULERS = [
     # corner 1
@@ -215,7 +217,7 @@ CAMERA_EULERS = [
     (45, 0, 225),
     (45, 0, 135),
     (45, 0, 45),
-    (45, 0, -180),
+    (50, 0, -180),
 ]
 # CAMLIGHT_DIRECTIONS = [
 #     (8, 8, -3),
@@ -294,6 +296,8 @@ def _create_cuboid():
   len_y = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   len_z = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   obj.set_size(len_x, len_y, len_z)
+  obj.density = '10'
+  obj.friction = '1 0.1 0.1'
   return obj
 
 def _create_cylinder():
@@ -301,12 +305,16 @@ def _create_cylinder():
   len_r = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max) / 2
   len_h = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   obj.set_size(len_r, len_h)
+  obj.friction = '1 0.1 0.1'
+  obj.density = '10'
   return obj
 
 def _create_sphere():
   obj = MjSphere()
   len_r = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max) / 2
   obj.set_size(len_r)
+  obj.friction = '1 0.1 0.1'
+  obj.density = '10'
   return obj
 
 def create_stack(
