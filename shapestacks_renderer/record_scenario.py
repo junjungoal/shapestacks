@@ -31,6 +31,7 @@ from shapestacks_renderer.rendering_constants import OBJ_COLORS_RGBA, VSEG_COLOR
   ISEG_COLOR_CODES
 import matplotlib
 matplotlib.use('TkAgg')
+import open3d as o3d
 
 
 EPS = np.finfo(float).eps * 4.
@@ -380,10 +381,11 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
                                 world_xml: ET.Element,
                                 depth: np.array):
     camera_id = sim.model.camera_name2id(camera)
-    fovy = sim.model.cam_fovy[camera_id]
-    f = 0.5*render_height / (math.tan(fovy * np.pi/360))
+    fovy = math.radians(sim.model.cam_fovy[camera_id])
+    f = render_height / (2*math.tan(fovy/2.))
+    intrinsics = o3d.camera.PinholeCameraIntrinsic(render_width, render_height, f, f, render_width/2., render_height/2.).intrinsic_matrix
     # intrinsics = np.array(((-f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
-    intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+    # intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
 
     cm = CameraModder(sim)
 
@@ -399,9 +401,8 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
     extrinsics = extrinsics @ camera_axis_correction
 
 
-    real_depth = _convert_depth_to_meters(sim, depth)
-    import pdb
-    pdb.set_trace()
+    real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=0))
+    # real_depth = _convert_depth_to_meters(sim, depth)
     upc = _create_uniform_pixel_coords_image(real_depth.shape)
     pc = upc * np.expand_dims(real_depth, -1)
     C = np.expand_dims(extrinsics[:3, 3], 0).T
@@ -573,20 +574,20 @@ if __name__ == '__main__':
           else:
             frame_mono = np.flip(frame[:, :render_width, :], 0)
             rgb[camera].append(frame_mono)
-          # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
-          #     (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
-          #     FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-          # scipy.misc.imsave(
-          #     os.path.join(FLAGS.record_path, frame_fn),
-          #     frame_mono)
-          # if FLAGS.with_stereo:
-          #   frame_stereo = np.flip(frame, 0)
-          #   frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
-          #       (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
-          #       FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-          #   scipy.misc.imsave(
-          #       os.path.join(FLAGS.record_path, frame_fn),
-          #       frame_stereo)
+          frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
+              (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+              FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+          scipy.misc.imsave(
+              os.path.join(FLAGS.record_path, frame_fn),
+              frame_mono)
+          if FLAGS.with_stereo:
+            frame_stereo = np.flip(frame, 0)
+            frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
+                (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+                FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+            scipy.misc.imsave(
+                os.path.join(FLAGS.record_path, frame_fn),
+                frame_stereo)
           if modality == 'depth':
             pcd, real_depth = _convert_rgbd_to_pointcloud(sim, camera, render_height,
                                     render_width, world_xml, frame_mono)
