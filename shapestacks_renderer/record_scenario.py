@@ -296,10 +296,10 @@ def _setup_render_depth(sim: mujoco_py.MjSim) -> mujoco_py.MjSim:
   render_sim = mujoco_py.MjSim(sim.model)
   render_sim.set_state(sim.get_state())
   render_ctx = mujoco_py.MjRenderContextOffscreen(render_sim)
-  render_ctx.vopt.flags[1] = 0 # textures off
-  render_ctx.scn.flags[0] = 0 # shadow off
-  render_ctx.scn.flags[2] = 0 # reflection off
-  render_ctx.scn.flags[4] = 0 # skybox off
+  # render_ctx.vopt.flags[1] = 0 # textures off
+  # render_ctx.scn.flags[0] = 0 # shadow off
+  # render_ctx.scn.flags[2] = 0 # reflection off
+  # render_ctx.scn.flags[4] = 0 # skybox off
   render_ctx.scn.stereo = 2 # side-by-side rendering
   return render_sim
 
@@ -399,8 +399,9 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
     extrinsics = extrinsics @ camera_axis_correction
 
 
-    # real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=0))
     real_depth = _convert_depth_to_meters(sim, depth)
+    import pdb
+    pdb.set_trace()
     upc = _create_uniform_pixel_coords_image(real_depth.shape)
     pc = upc * np.expand_dims(real_depth, -1)
     C = np.expand_dims(extrinsics[:3, 3], 0).T
@@ -416,9 +417,9 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
         pc, cam_proj_mat_inv), 0)
     world_coords = world_coords_homo[..., :-1][0]
 
-    # x = world_coords[:, :, 0]
-    # y = world_coords[:, :, 1]
-    # z = world_coords[:, :, 2]
+    x = world_coords[:, :, 0]
+    y = world_coords[:, :, 1]
+    z = world_coords[:, :, 2]
     #
     # import matplotlib.pyplot as plt
     # from mpl_toolkits.mplot3d import proj3d
@@ -429,7 +430,7 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
     # ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
     # plt.show()
 
-    return world_coords
+    return world_coords, real_depth
 
 def _render_seg(sim: mujoco_py.MjSim, camera: str, render_height: int, render_width: int, world_xml: ET.Element):
   lm = LightModder(sim)
@@ -546,8 +547,14 @@ if __name__ == '__main__':
   # run simulation and record screenshots
   stack_collapsed = False
   pcds = {}
+  depth = {}
+  rgb = {}
+  real_depth_data = {}
   for camera in FLAGS.cameras:
       pcds[camera] = []
+      depth[camera] = []
+      rgb[camera] = []
+      real_depth_data[camera] = []
   for i in tqdm.tqdm(range(total_steps)):
     if i % snapshot_interval == 0 and i // snapshot_interval < FLAGS.max_frames:
       frame_nr = i // snapshot_interval
@@ -562,26 +569,35 @@ if __name__ == '__main__':
           # save frame
           if modality == 'depth':
             frame_mono = np.flip(frame[:, :render_width], 0)
+            depth[camera].append(frame_mono)
           else:
             frame_mono = np.flip(frame[:, :render_width, :], 0)
-          frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
-              (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
-              FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-          scipy.misc.imsave(
-              os.path.join(FLAGS.record_path, frame_fn),
-              frame_mono)
-          if FLAGS.with_stereo:
-            frame_stereo = np.flip(frame, 0)
-            frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
-                (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
-                FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-            scipy.misc.imsave(
-                os.path.join(FLAGS.record_path, frame_fn),
-                frame_stereo)
+            rgb[camera].append(frame_mono)
+          # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
+          #     (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+          #     FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+          # scipy.misc.imsave(
+          #     os.path.join(FLAGS.record_path, frame_fn),
+          #     frame_mono)
+          # if FLAGS.with_stereo:
+          #   frame_stereo = np.flip(frame, 0)
+          #   frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
+          #       (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+          #       FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+          #   scipy.misc.imsave(
+          #       os.path.join(FLAGS.record_path, frame_fn),
+          #       frame_stereo)
           if modality == 'depth':
-            pcd = _convert_rgbd_to_pointcloud(sim, camera, render_height,
+            pcd, real_depth = _convert_rgbd_to_pointcloud(sim, camera, render_height,
                                     render_width, world_xml, frame_mono)
             pcds[camera].append(pcd)
+            real_depth_data[camera].append(real_depth)
+            # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-real-depth-%s.%s" % \
+            #   (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+            #   FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+            # scipy.misc.imsave(
+            #   os.path.join(FLAGS.record_path, frame_fn),
+            #   frame_mono)
 
     if not stack_collapsed and i > BURN_IN_STEPS:
       velocities = np.abs(sim.data.sensordata)
@@ -595,6 +611,9 @@ if __name__ == '__main__':
     F['stability'] = not stack_collapsed
     for camera in FLAGS.cameras:
         F[camera+'/pcd'] = np.array(pcds[camera])
+        F[camera+'/depth'] = np.array(depth[camera])
+        F[camera+'/real_depth'] = np.array(real_depth_data[camera])
+        F[camera+'/rgb'] = np.array(rgb[camera]).astype(np.uint8)
 
   # print results
   print("Stack collapse: %s" % stack_collapsed)

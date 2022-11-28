@@ -15,11 +15,11 @@ RECORD_ROOT_DIR="${DATASET_ROOT_DIR}/recordings"
 FILTER="h=[$2]"
 
 # recording options
-TIME=1
-FPS=8
-MAX_FRAMES=1
-RES="224 224"
-CAMERAS="cam_1 cam_2 cam_3"
+TIME=3
+FPS=4
+MAX_FRAMES=20
+RES="128 128"
+CAMERAS="cam_17"
 FORMAT="depth"
 
 # helper functions

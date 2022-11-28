@@ -19,7 +19,7 @@ TIME=3
 FPS=4
 # MAX_FRAMES=1
 MAX_FRAMES=20
-RES="224 224"
+RES="128 128"
 # CAMERAS="cam_1 cam_2 cam_3 \
 #     cam_4 cam_5 cam_6 \
 #     cam_7 cam_8 cam_9 \
@@ -29,7 +29,7 @@ RES="224 224"
 #     cam_4 \
 #     cam_7 \
 #     cam_10"
-CAMERAS="cam_1 cam_2"
+CAMERAS="cam_17"
 FORMAT="rgb depth"
 MAX_LIGHTS=1
 MAX_WALLTEX=1
@@ -77,6 +77,6 @@ for env_file in `ls ${MJCF_ROOT_DIR} | grep env_`; do
   # create params and render
   params=$(create_params "${MJCF_ROOT_DIR}/$env_file" $record_dir)
   # echo $params
-  # LD_PRELOAD=/usr/lib/nvidia-384/libOpenGL.so python record_scenario.py ${params} > ${log_file}
+  # LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libOpenGL.so python record_scenario.py ${params} > ${log_file}
   python record_scenario.py ${params} > ${log_file}
 done
