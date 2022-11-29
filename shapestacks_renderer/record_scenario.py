@@ -381,27 +381,30 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
                                 world_xml: ET.Element,
                                 depth: np.array):
     camera_id = sim.model.camera_name2id(camera)
-    fovy = math.radians(sim.model.cam_fovy[camera_id])
-    f = render_height / (2*math.tan(fovy/2.))
-    intrinsics = o3d.camera.PinholeCameraIntrinsic(render_width, render_height, f, f, render_width/2., render_height/2.).intrinsic_matrix
-    # intrinsics = np.array(((-f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
-    # intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+    fovy = sim.model.cam_fovy[camera_id]
+    f = 0.5 * render_height / math.tan(fovy * math.pi / 360)
+    intrinsics = np.array(((f, 0, render_width / 2), (0, f, render_height / 2), (0, 0, 1)))
+
+    print('Intrinsics: ', intrinsics)
+    # fovy = math.radians(sim.model.cam_fovy[camera_id])
+    # f = render_height / (2*math.tan(fovy/2.))
+    # intrinsics = o3d.camera.PinholeCameraIntrinsic(render_width, render_height, f, f, render_width/2., render_height/2.).intrinsic_matrix
 
     cm = CameraModder(sim)
 
-    cam_pos = cm.get_pos(camera)
-    cam_quat = cm.get_quat(camera)
-    # mat = quat2mat(cam_quat)
-    mat = quat2mat(np.array([*cam_quat[1:], cam_quat[0]]))
-    extrinsics = make_pose(cam_pos, mat)
-    # extrinsics = np.concatenate([mat, cam_pos[:, None]], axis=1)
+    # cam_pos = cm.get_pos(camera)
+    # cam_quat = cm.get_quat(camera)
+    # mat = quat2mat(np.array([*cam_quat[1:], cam_quat[0]]))
+    cam_pos = sim.data.cam_xpos[camera_id]
+    cam_mat = sim.data.cam_xmat[camera_id].reshape(3, 3)
+    extrinsics = make_pose(cam_pos, cam_mat)
     camera_axis_correction = np.array(
         [[1.0, 0.0, 0.0, 0.0], [0.0, -1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     )
     extrinsics = extrinsics @ camera_axis_correction
 
 
-    real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=0))
+    real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=1))
     # real_depth = _convert_depth_to_meters(sim, depth)
     upc = _create_uniform_pixel_coords_image(real_depth.shape)
     pc = upc * np.expand_dims(real_depth, -1)
@@ -418,9 +421,9 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
         pc, cam_proj_mat_inv), 0)
     world_coords = world_coords_homo[..., :-1][0]
 
-    x = world_coords[:, :, 0]
-    y = world_coords[:, :, 1]
-    z = world_coords[:, :, 2]
+    # x = world_coords[:, :, 0]
+    # y = world_coords[:, :, 1]
+    # z = world_coords[:, :, 2]
     #
     # import matplotlib.pyplot as plt
     # from mpl_toolkits.mplot3d import proj3d
