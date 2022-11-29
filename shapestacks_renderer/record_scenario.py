@@ -402,6 +402,7 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
         [[1.0, 0.0, 0.0, 0.0], [0.0, -1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     )
     extrinsics = extrinsics @ camera_axis_correction
+    print('Extrinsics: ', extrinsics)
 
 
     real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=1))
