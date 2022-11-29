@@ -16,9 +16,9 @@ FILTER="h=[$2]"
 
 # recording options
 TIME=3
-FPS=4
+FPS=8
 # MAX_FRAMES=1
-MAX_FRAMES=20
+MAX_FRAMES=10
 RES="128 128"
 # CAMERAS="cam_1 cam_2 cam_3 \
 #     cam_4 cam_5 cam_6 \
@@ -30,7 +30,7 @@ RES="128 128"
 #     cam_7 \
 #     cam_10"
 CAMERAS="cam_17"
-FORMAT="rgb depth"
+FORMAT="rgb"
 MAX_LIGHTS=1
 MAX_WALLTEX=1
 MAX_FLOORTEX=1
