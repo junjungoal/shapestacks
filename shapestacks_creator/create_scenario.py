@@ -172,27 +172,27 @@ LIGHT_DIRECTIONS = [
 # camera setup
 CAMERA_POSITIONS = [
     # corner 1
-    (-7, -7, 5),   # cam_1: center
-    (-9, -2, 5),   # cam_2: left
-    (-2, -9, 5),   # cam_3: right
+    (-1.05, -1.05, 0.75),   # cam_1: center
+    (-0.9, -0.2, 0.75),   # cam_2: left
+    (-0.3, -1.35, 0.75),   # cam_3: right
     # corner 2
-    (-7, 7, 5),   # cam_4 center
-    (-9, 2, 5),   # cam_5: right
-    (-2, 9, 5),   # cam_6: left
+    (-1.05, 1.05, 0.75),   # cam_4 center
+    (-1.35, 0.3, 0.75),   # cam_5: right
+    (-0.3, 1.35, 0.75),   # cam_6: left
     # corner 3
-    (7, 7, 5),    # cam_7: center
-    (9, 2, 5),    # cam_8: left
-    (2, 9, 5),    # cam_9: right
+    (1.05, 1.05, 0.75),    # cam_7: center
+    (1.35, 0.3, 0.75),    # cam_8: left
+    (0.3, 1.35, 0.75),    # cam_9: right
     # corner 4
-    (7, -7, 5),   # cam_10: center
-    (9, -2, 5),   # cam_11: right
-    (2, -9, 5),   # cam_12: left
+    (1.05, -1.05, 0.75),   # cam_10: center
+    (1.35, -0.3, 0.75),   # cam_11: right
+    (0.3, -1.35, 0.75),   # cam_12: left
     # top
-    (-5, -5, 9),  # cam_13: corner 1
-    (-5, 5, 9),   # cam_14: corner 2
-    (5, 5, 9),    # cam_15: corner 3
-    (5, -5, 9),   # cam_16: corner 4
-    (0, 1.2, 0.85)
+    (-0.75, -0.75, 1.35),  # cam_13: corner 1
+    (-0.75, 0.75, 1.35),   # cam_14: corner 2
+    (0.75, 0.75, 1.35),    # cam_15: corner 3
+    (0.75, -0.75, 1.35),   # cam_16: corner 4
+    # (0, 1.2, 0.9)
 ]
 CAMERA_EULERS = [
     # corner 1
