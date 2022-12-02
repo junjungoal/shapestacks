@@ -405,8 +405,7 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
     print('Extrinsics: ', extrinsics)
 
 
-    real_depth = _convert_depth_to_meters(sim, np.flip(depth, axis=1))
-    # real_depth = _convert_depth_to_meters(sim, depth)
+    real_depth = _convert_depth_to_meters(sim, depth)
     upc = _create_uniform_pixel_coords_image(real_depth.shape)
     pc = upc * np.expand_dims(real_depth, -1)
     C = np.expand_dims(extrinsics[:3, 3], 0).T

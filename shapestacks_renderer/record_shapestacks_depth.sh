@@ -11,13 +11,10 @@ DATASET_ROOT_DIR="${SHAPESTACKS_CODE_HOME}/data/${DATASET_NAME}"
 MJCF_ROOT_DIR="${DATASET_ROOT_DIR}/mjcf"
 RECORD_ROOT_DIR="${DATASET_ROOT_DIR}/recordings"
 
-# file filter
-FILTER="h=[$2]"
-
 # recording options
 TIME=3
-FPS=4
-MAX_FRAMES=20
+FPS=8
+MAX_FRAMES=10
 RES="128 128"
 CAMERAS="cam_17"
 FORMAT="depth"
@@ -43,18 +40,17 @@ create_params()
 # mkdir ${RECORD_ROOT_DIR}
 
 # main loop over all simulation environments to record
-for env_file in `ls ${MJCF_ROOT_DIR} | grep env_ | grep ${FILTER}`; do
-  date
+for env_file in `ls ${MJCF_ROOT_DIR} | grep env_`; do
   echo "Recording ${env_file%".xml"} ..."
 
   # set up directory
   record_dir=${RECORD_ROOT_DIR}/${env_file%".xml"}
-  log_file=${record_dir}/depth_log.txt
-  mkdir ${record_dir}
+  log_file=${record_dir}/log.txt
+  # mkdir ${record_dir}
 
   # create params and render
   params=$(create_params "${MJCF_ROOT_DIR}/$env_file" $record_dir)
   # echo $params
-  # LD_PRELOAD=/usr/lib/nvidia-384/libOpenGL.so python3 record_scenario.py ${params} > ${log_file}
-  LD_PRELOAD=/usr/lib/nvidia-418/libOpenGL.so python3 record_scenario.py ${params} > ${log_file}
+  # LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libOpenGL.so python record_scenario.py ${params} > ${log_file}
+  python record_scenario.py ${params} > ${log_file}
 done

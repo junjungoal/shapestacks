@@ -11,26 +11,13 @@ DATASET_ROOT_DIR="${SHAPESTACKS_CODE_HOME}/data/${DATASET_NAME}"
 MJCF_ROOT_DIR="${DATASET_ROOT_DIR}/mjcf"
 RECORD_ROOT_DIR="${DATASET_ROOT_DIR}/recordings"
 
-# file filter
-FILTER="h=[$2]"
-
 # recording options
 TIME=3
 FPS=8
-# MAX_FRAMES=1
 MAX_FRAMES=10
 RES="128 128"
-# CAMERAS="cam_1 cam_2 cam_3 \
-#     cam_4 cam_5 cam_6 \
-#     cam_7 cam_8 cam_9 \
-#     cam_10 cam_11 cam_12 \
-#     cam_13 cam_14 cam_15 cam_16"
-# CAMERAS="cam_1 \
-#     cam_4 \
-#     cam_7 \
-#     cam_10"
 CAMERAS="cam_17"
-FORMAT="rgb"
+FORMAT="rgb depth"
 MAX_LIGHTS=1
 MAX_WALLTEX=1
 MAX_FLOORTEX=1
@@ -66,7 +53,6 @@ create_params()
 # main loop over all simulation environments to record
 # for env_file in `ls ${MJCF_ROOT_DIR} | grep env_ | grep ${FILTER}`; do
 for env_file in `ls ${MJCF_ROOT_DIR} | grep env_`; do
-  date
   echo "Recording ${env_file%".xml"} ..."
 
   # set up directory

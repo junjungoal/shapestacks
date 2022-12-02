@@ -21,10 +21,12 @@ create_params()
   export_path=${SHAPESTACKS_CODE_HOME}/data/shapestacks_example/mjcf  # $2: record_path
 
   # randomize light and textures
-  height=`python -c "import random; print(random.randint(3,${MAX_HEIGHT}))"`
-  vcom=`python -c "import random; print(random.randint(0,${height}))"`
+  height=`python -c "import random; print(random.randint(2,${MAX_HEIGHT}))"`
+  # vcom=`python -c "import random; print(random.randint(0,${height}))"`
+  vcom=`python -c "import random; print(random.randint(1,${height}))"`
   shape_num=`python -c "import random; print(random.randint(1,3))"`
-  shapes=`python -c "import numpy as np; [print(name) for name in np.random.choice(['cuboid', 'cylinder', 'sphere'], size=${shape_num}, replace=False)]"`
+  # shapes=`python -c "import numpy as np; [print(name) for name in np.random.choice(['cuboid', 'cylinder', 'sphere'], size=${shape_num}, replace=False)]"`
+  shapes="cuboid"
   # echo $lightid $walltex $floortex
   MJMODEL_NAME="h=${height}-vcom=${vcom}-vpsf=0-v=${v}"
 
@@ -32,6 +34,7 @@ create_params()
       --shapes ${shapes} \
       --height ${height} \
       --vcom ${vcom} \
+      --numcolors 3 \
       --unique_colors"
 }
 
@@ -47,7 +50,7 @@ create_params()
 # main loop over all simulation environments to record
 
 i=0
-while [ $i -ne 6000 ]
+while [ $i -ne 4000 ]
 do
         params=$(create_params $i)
         python create_scenario.py ${params}

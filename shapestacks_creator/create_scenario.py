@@ -330,8 +330,8 @@ def create_stack(
 
   # color setup
   obj_colors = OBJ_COLORS_RGBA
-  random.shuffle(obj_colors)
   obj_colors = obj_colors[:num_colors]
+  random.shuffle(obj_colors)
 
   # shape setup
   all_shapes = []
