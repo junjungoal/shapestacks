@@ -572,6 +572,8 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
   cam.pos = MjcfFormat.tuple(CAMERA_POSITIONS[cam_id])
+  import pdb
+  pdb.set_trace()
   cam.euler = MjcfFormat.tuple(CAMERA_EULERS[cam_id])
   cam.fovy='45'
   # body.add_child_elem(cam)
