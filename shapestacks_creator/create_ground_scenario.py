@@ -689,7 +689,7 @@ if __name__ == '__main__':
   else:
     cam_id_list = FLAGS.camids
   # for cam_id in cam_id_list:
-  for cam_id in range(30):
+  for cam_id in range(3):
     create_camera(wb, cam_id, FLAGS.camlights_on)
 
   # export
