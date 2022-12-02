@@ -4,11 +4,13 @@ Creates a ShapeStack scenario.
 
 import sys
 import os
+import numpy as np
 import argparse
 import shutil
 import xml.etree.ElementTree as ET
 import random
 import math
+from scipy.spatial.transform import Rotation as R
 
 from bs4 import BeautifulSoup
 
@@ -20,7 +22,39 @@ from simulation_builder.mj_elements import MjVelocimeter, MjLight, MjCamera, \
   MjMaterial, MjGeom, MjBody
 from simulation_builder.mj_templates import MjCuboid, MjCylinder, MjSphere, \
   MjCameraHeadlight
+from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_pose_matrix, camera_origin_direction
+import torch
+import torch.nn.functional as F
 
+cam_poses, _ = get_sphere_poses(0, 360, 100, 2.0)
+ind = np.where(cam_poses[:, 2, 3] > 0.2)
+cam_poses = cam_poses[ind]
+
+def look_at_rotation(camera_position, at=(0, 0, 0), up=(0., 0, 1), device: str = "cpu") -> torch.Tensor:
+    # Format input and broadcast
+    nbatch = camera_position.shape[0]
+    camera_position = camera_position.to(device)
+    if not torch.is_tensor(at):
+        at = torch.tensor(at, dtype=torch.float32, device=device)
+    at = at.expand(nbatch, 3)
+    if not torch.is_tensor(up):
+        up = torch.tensor(up, dtype=torch.float32, device=device)
+    up = up.expand(nbatch, 3)
+
+    for t, n in zip([camera_position, at, up], ["camera_position", "at", "up"]):
+        if t.shape[-1] != 3:
+            msg = "Expected arg %s to have shape (N, 3); got %r"
+            raise ValueError(msg % (n, t.shape))
+    z_axis = F.normalize(camera_position - at, eps=1e-5)
+    x_axis = F.normalize(torch.cross(up, z_axis, dim=1), eps=1e-5)
+    y_axis = F.normalize(torch.cross(z_axis, x_axis, dim=1), eps=1e-5)
+    is_close = torch.isclose(x_axis, torch.tensor(0.0), atol=5e-3).all(dim=1, keepdim=True)
+    if is_close.any():
+        # print(f'warning: up vector {up[0].detach()} is close to x_axis {z_axis[0].detach()}')
+        replacement = F.normalize(torch.cross(y_axis, z_axis, dim=1), eps=1e-5)
+        x_axis = torch.where(is_close, replacement, x_axis)
+    R = torch.cat((x_axis[:, None, :], y_axis[:, None, :], z_axis[:, None, :]), dim=1)
+    return R.transpose(1, 2)
 
 # command line arguments
 ARGPARSER = argparse.ArgumentParser(
@@ -61,13 +95,13 @@ ARGPARSER.add_argument(
     stack). Starting from 1 (bottom object) to height - 1 (second to top \
     object). Index 0 means stable stack.")
 ARGPARSER.add_argument(
-    '--com_scale_min', type=float, default=0.00,
+    '--com_scale_min', type=float, default=2.,
     help="Inner radius for COM surface sampling.")
 ARGPARSER.add_argument(
-    '--com_scale_max', type=float, default=0.50,
+    '--com_scale_max', type=float, default=3.0,
     help="Outer radius for COM surface sampling")
 ARGPARSER.add_argument(
-    '--vcom_scale', type=float, default=0.05,
+    '--vcom_scale', type=float, default=0.5,
     help="The absolute offset added to an allowed COM offset during \
     violation.")
 ARGPARSER.add_argument(
@@ -151,7 +185,7 @@ OBJ_COLORS_RGBA = [
 # stack
 STACK_ORIGIN = (0.0, 0.0)
 # ORIGIN_OFFSET_MAX = 2.0
-ORIGIN_OFFSET_MAX = 0.3
+ORIGIN_OFFSET_MAX = 0.6
 
 # light setup
 LIGHT_POSITIONS = [
@@ -173,7 +207,7 @@ LIGHT_DIRECTIONS = [
 CAMERA_POSITIONS = [
     # corner 1
     (-1.05, -1.05, 0.75),   # cam_1: center
-    (-0.9, -0.2, 0.75),   # cam_2: left
+    (-1.35, -0.3, 0.75),   # cam_2: left
     (-0.3, -1.35, 0.75),   # cam_3: right
     # corner 2
     (-1.05, 1.05, 0.75),   # cam_4 center
@@ -330,8 +364,8 @@ def create_stack(
 
   # color setup
   obj_colors = OBJ_COLORS_RGBA
-  obj_colors = obj_colors[:num_colors]
   random.shuffle(obj_colors)
+  obj_colors = obj_colors[:num_colors]
 
   # shape setup
   all_shapes = []
@@ -509,9 +543,11 @@ def create_stack(
     off_y = tmp_x * math.sin(rad) + tmp_y * math.cos(rad)
 
     # apply offsets
-    pos_x = com_x + off_x
-    pos_y = com_y + off_y
-    off_z = stack_height - z / 2
+    # pos_x = com_x + off_x
+    # pos_y = com_y + off_y
+    pos_x = np.random.uniform(-ORIGIN_OFFSET_MAX, ORIGIN_OFFSET_MAX)
+    pos_y = np.random.uniform(-ORIGIN_OFFSET_MAX, ORIGIN_OFFSET_MAX)
+    off_z = z/2.
     pos = (pos_x, pos_y, off_z)
     obj.name = "shape_%s" % (height - i)
     obj.pos = MjcfFormat.tuple(pos)
@@ -531,9 +567,9 @@ def create_stack(
   orig_off_y = random.uniform(-ORIGIN_OFFSET_MAX, ORIGIN_OFFSET_MAX)
   for obj in shape_list:
     # adjust height
-    xpos, ypos, zpos = MjcfFormat.strtuple2float(obj.pos)
-    obj.pos = MjcfFormat.tuple((
-        xpos + orig_off_x, ypos + orig_off_y, zpos + math.fabs(stack_height)))
+    # xpos, ypos, zpos = MjcfFormat.strtuple2float(obj.pos)
+    # obj.pos = MjcfFormat.tuple((
+    #     xpos + orig_off_x, ypos + orig_off_y, zpos + math.fabs(stack_height)))
     # insert object
     wb.insert_dynamic(obj)
 
@@ -571,10 +607,19 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
 
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
-  cam.pos = MjcfFormat.tuple(CAMERA_POSITIONS[cam_id])
-  import pdb
-  pdb.set_trace()
-  cam.euler = MjcfFormat.tuple(CAMERA_EULERS[cam_id])
+  idx = np.random.randint(len(cam_poses))
+  pos = cam_poses[idx][:3, 3]
+  mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
+  rot = R.from_matrix(mat)
+  phi, theta, psi = rot.as_euler('xyz', degrees=True)
+  # phi, theta = camera_origin_direction(pos[0], pos[1], pos[2])
+  # pose = get_pose_matrix(pos[0], pos[1], pos[2], phi=phi, theta=theta)
+  # mat = cam_poses[idx][:3, :3]
+  # quat = mat2quat(mat)
+  # euler = quat2axisangle(quat)
+  # euler = mat2euler(mat)
+  cam.pos = MjcfFormat.tuple(pos)
+  cam.euler = MjcfFormat.tuple([phi, theta, psi])
   cam.fovy='45'
   # body.add_child_elem(cam)
   # wb.insert_static(body)
@@ -643,7 +688,8 @@ if __name__ == '__main__':
     cam_id_list = list(range(len(CAMERA_POSITIONS)))
   else:
     cam_id_list = FLAGS.camids
-  for cam_id in cam_id_list:
+  # for cam_id in cam_id_list:
+  for cam_id in range(3):
     create_camera(wb, cam_id, FLAGS.camlights_on)
 
   # export
