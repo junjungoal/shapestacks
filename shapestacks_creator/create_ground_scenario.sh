@@ -10,7 +10,7 @@ echo "Recording ShapeStacks scenarios from MuJoCo."
 
 # recording options
 # TIME=4
-MAX_HEIGHT=3
+MAX_HEIGHT=4
 COLOR_MODE="original"
 
 # helper functions

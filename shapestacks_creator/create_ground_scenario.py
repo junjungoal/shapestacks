@@ -26,7 +26,7 @@ from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_po
 import torch
 import torch.nn.functional as F
 
-cam_poses, _ = get_sphere_poses(0, 360, 100, 2.0)
+cam_poses, _ = get_sphere_poses(0, 360, 30, 2.0)
 ind = np.where(cam_poses[:, 2, 3] > 0.2)
 cam_poses = cam_poses[ind]
 

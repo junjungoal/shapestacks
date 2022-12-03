@@ -225,7 +225,6 @@ def get_sphere_poses(start_angle: float, end_angle: float,
         pose matrices in homogeneous representation.
     """
     phis = np.linspace(start_angle, end_angle, number_steps)
-    print("Angle stepsize: {:.2f}°".format((end_angle - start_angle)/number_steps))
     thetas = np.linspace(start_angle, end_angle, number_steps)
     angles = np.transpose([np.tile(phis, len(thetas)),
                            np.repeat(thetas, len(phis))])
