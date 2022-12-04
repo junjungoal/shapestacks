@@ -26,9 +26,9 @@ from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_po
 import torch
 import torch.nn.functional as F
 
-cam_poses, _ = get_sphere_poses(0, 360, 30, 2.0)
-ind = np.where(cam_poses[:, 2, 3] > 0.2)
-cam_poses = cam_poses[ind]
+# cam_poses, _ = get_sphere_poses(0, 360, 30, 2.0)
+# ind = np.where(cam_poses[:, 2, 3] > 0.2)
+# cam_poses = cam_poses[ind]
 
 def look_at_rotation(camera_position, at=(0, 0, 0), up=(0., 0, 1), device: str = "cpu") -> torch.Tensor:
     # Format input and broadcast
@@ -607,8 +607,13 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
 
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
-  idx = np.random.randint(len(cam_poses))
-  pos = cam_poses[idx][:3, 3]
+  # idx = np.random.randint(len(cam_poses))
+  valid = False
+  while not valid:
+      cam_pose = get_sphere_pose(np.random.randint(0, 360), np.random.randint(0, 360), 2.0)
+      if cam_pose[2, 3] > 0.2:
+          valid = True
+  pos = cam_pose[:3, 3]
   mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
   rot = R.from_matrix(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)

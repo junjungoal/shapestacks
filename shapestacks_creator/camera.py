@@ -387,16 +387,14 @@ def mat2euler(rmat, axes="sxyz"):
         ax, az = az, ax
     return vec((ax, ay, az))
 
-# poses, angles = get_sphere_poses(0, 360, 50, 1.0)
-# pos = poses[:, :3, 3]
-# ind = np.where(pos[:, 2]>0.1)[0]
-# x = pos[ind, 0]
-# y = pos[ind, 1]
-# z = pos[ind, 2]
-#
-#
-# ax.scatter(x,y,z, marker='o', s=20, c="goldenrod", alpha=0.6)
-# plt.show()
-# # for ii in range(0,360,1):
-# #     ax.view_init(elev=10., azim=ii)
-# #     plt.savefig("movie%d.png" % ii)
+poses, angles = get_circle_poses(0, 360, 50, 1.0)
+
+pos = poses[:, :3, 3]
+ind = np.where(pos[:, 2]>0.1)[0]
+x = pos[ind, 0]
+y = pos[ind, 1]
+z = pos[ind, 2]
+
+
+ax.scatter(x,y,z, marker='o', s=20, c="goldenrod", alpha=0.6)
+plt.show()

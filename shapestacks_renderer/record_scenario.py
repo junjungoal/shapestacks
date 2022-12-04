@@ -376,6 +376,7 @@ def _pixel_to_world_coords(pixel_coords, cam_proj_mat_inv):
         [world_coords, np.ones((h, w, 1))], axis=-1)
     return world_coords_homo
 
+
 def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
                                 camera: str, render_height: int, render_width: int,
                                 world_xml: ET.Element,
@@ -402,6 +403,7 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
         [[1.0, 0.0, 0.0, 0.0], [0.0, -1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     )
     extrinsics = extrinsics @ camera_axis_correction
+    camera_loc = extrinsics
     print('Extrinsics: ', extrinsics)
 
 
@@ -434,7 +436,7 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
     # ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
     # plt.show()
 
-    return world_coords, real_depth
+    return world_coords, real_depth, camera_loc
 
 def _render_seg(sim: mujoco_py.MjSim, camera: str, render_height: int, render_width: int, world_xml: ET.Element):
   lm = LightModder(sim)
@@ -554,6 +556,7 @@ if __name__ == '__main__':
   depth = {}
   rgb = {}
   real_depth_data = {}
+  camera_loc = {}
   for camera in FLAGS.cameras:
       pcds[camera] = []
       depth[camera] = []
@@ -585,17 +588,18 @@ if __name__ == '__main__':
               frame_mono)
           if FLAGS.with_stereo:
             frame_stereo = np.flip(frame, 0)
-            frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
-                (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
-                FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-            scipy.misc.imsave(
-                os.path.join(FLAGS.record_path, frame_fn),
-                frame_stereo)
+            # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
+            #     (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
+            #     FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
+            # scipy.misc.imsave(
+            #     os.path.join(FLAGS.record_path, frame_fn),
+            #     frame_stereo)
           if modality == 'depth':
-            pcd, real_depth = _convert_rgbd_to_pointcloud(sim, camera, render_height,
+            pcd, real_depth, extrinsics = _convert_rgbd_to_pointcloud(sim, camera, render_height,
                                     render_width, world_xml, frame_mono)
             pcds[camera].append(pcd)
             real_depth_data[camera].append(real_depth)
+            camera_loc[camera] = extrinsics
             # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-real-depth-%s.%s" % \
             #   (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
             #   FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
@@ -618,6 +622,7 @@ if __name__ == '__main__':
         F[camera+'/depth'] = np.array(depth[camera])
         F[camera+'/real_depth'] = np.array(real_depth_data[camera])
         F[camera+'/rgb'] = np.array(rgb[camera]).astype(np.uint8)
+        F[camera+'/extrinsics'] = np.array(camera_loc[camera])
 
   # print results
   print("Stack collapse: %s" % stack_collapsed)
