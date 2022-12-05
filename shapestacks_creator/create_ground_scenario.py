@@ -22,13 +22,25 @@ from simulation_builder.mj_elements import MjVelocimeter, MjLight, MjCamera, \
   MjMaterial, MjGeom, MjBody
 from simulation_builder.mj_templates import MjCuboid, MjCylinder, MjSphere, \
   MjCameraHeadlight
-from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_pose_matrix, camera_origin_direction
+from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_pose_matrix, camera_origin_direction, get_sphere_pose
 import torch
 import torch.nn.functional as F
 
-# cam_poses, _ = get_sphere_poses(0, 360, 30, 2.0)
-# ind = np.where(cam_poses[:, 2, 3] > 0.2)
-# cam_poses = cam_poses[ind]
+cam_poses, _ = get_sphere_poses(0, 360, 50, 1.4)
+pos = cam_poses[:, :3, 3]
+valid_idxs = np.where(pos[:, 2]> 0.)[0]
+
+def ar2ten(array, device, dtype=None):
+    if isinstance(array, list) or isinstance(array, dict):
+        return array
+
+    if isinstance(array, np.ndarray):
+        tensor = torch.from_numpy(array).to(device)
+    else:
+        tensor = torch.tensor(array).to(device)
+    if dtype is not None:
+        tensor = tensor.to(dtype)
+    return tensor
 
 def look_at_rotation(camera_position, at=(0, 0, 0), up=(0., 0, 1), device: str = "cpu") -> torch.Tensor:
     # Format input and broadcast
@@ -48,14 +60,14 @@ def look_at_rotation(camera_position, at=(0, 0, 0), up=(0., 0, 1), device: str =
     z_axis = F.normalize(camera_position - at, eps=1e-5)
     x_axis = F.normalize(torch.cross(up, z_axis, dim=1), eps=1e-5)
     y_axis = F.normalize(torch.cross(z_axis, x_axis, dim=1), eps=1e-5)
-    is_close = torch.isclose(x_axis, torch.tensor(0.0), atol=5e-3).all(dim=1, keepdim=True)
+    is_close = torch.isclose(x_axis, torch.tensor(0.0), atol=5e-3).all(
+        dim=1, keepdim=True
+    )
     if is_close.any():
-        # print(f'warning: up vector {up[0].detach()} is close to x_axis {z_axis[0].detach()}')
         replacement = F.normalize(torch.cross(y_axis, z_axis, dim=1), eps=1e-5)
         x_axis = torch.where(is_close, replacement, x_axis)
     R = torch.cat((x_axis[:, None, :], y_axis[:, None, :], z_axis[:, None, :]), dim=1)
     return R.transpose(1, 2)
-
 # command line arguments
 ARGPARSER = argparse.ArgumentParser(
     description='Create a MuJoCo simulation environment containing an \
@@ -185,7 +197,7 @@ OBJ_COLORS_RGBA = [
 # stack
 STACK_ORIGIN = (0.0, 0.0)
 # ORIGIN_OFFSET_MAX = 2.0
-ORIGIN_OFFSET_MAX = 0.6
+ORIGIN_OFFSET_MAX = 0.4
 
 # light setup
 LIGHT_POSITIONS = [
@@ -608,26 +620,20 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
   # idx = np.random.randint(len(cam_poses))
-  valid = False
-  while not valid:
-      cam_pose = get_sphere_pose(np.random.randint(0, 360), np.random.randint(0, 360), 2.0)
-      if cam_pose[2, 3] > 0.2:
-          valid = True
-  pos = cam_pose[:3, 3]
-  mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
-  rot = R.from_matrix(mat)
+  # valid = False
+  # while not valid:
+  #     cam_pose = get_sphere_pose(np.random.randint(0, 360), np.random.randint(0, 360), 1.4)
+  #     if cam_pose[2, 3] > 0.8:
+  #         valid = True
+  idx = np.random.choice(valid_idxs)
+  pos = cam_poses[idx, :3, 3]
+  mat = look_at_rotation(ar2ten(pos, 'cuda')[None].float())[0].numpy()
+  # rot = R.from_matrix(mat)
+  rot = R.from_dcm(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)
-  # phi, theta = camera_origin_direction(pos[0], pos[1], pos[2])
-  # pose = get_pose_matrix(pos[0], pos[1], pos[2], phi=phi, theta=theta)
-  # mat = cam_poses[idx][:3, :3]
-  # quat = mat2quat(mat)
-  # euler = quat2axisangle(quat)
-  # euler = mat2euler(mat)
   cam.pos = MjcfFormat.tuple(pos)
   cam.euler = MjcfFormat.tuple([phi, theta, psi])
   cam.fovy='45'
-  # body.add_child_elem(cam)
-  # wb.insert_static(body)
   wb.insert_static_camera(cam)
   # camera headlight
   # if with_headlight:

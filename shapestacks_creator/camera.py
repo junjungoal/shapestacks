@@ -334,7 +334,8 @@ def get_pose_matrix(x: float=0, y: float=0, z: float=0,
     pose : np.array (4, 4)
         pose matrix in homogeneous representation.
     """
-    rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_matrix()
+    # rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_matrix()
+    rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_dcm()
     trans = np.array([[x, y, z]])
     pose = np.concatenate((np.concatenate((rot, trans.T), axis=1),
                            [[0, 0, 0, 1]]), axis=0)
@@ -387,14 +388,14 @@ def mat2euler(rmat, axes="sxyz"):
         ax, az = az, ax
     return vec((ax, ay, az))
 
-poses, angles = get_circle_poses(0, 360, 50, 1.0)
-
-pos = poses[:, :3, 3]
-ind = np.where(pos[:, 2]>0.1)[0]
-x = pos[ind, 0]
-y = pos[ind, 1]
-z = pos[ind, 2]
-
-
-ax.scatter(x,y,z, marker='o', s=20, c="goldenrod", alpha=0.6)
-plt.show()
+# poses, angles = get_circle_poses(0, 360, 50, 1.0)
+#
+# pos = poses[:, :3, 3]
+# ind = np.where(pos[:, 2]>0.1)[0]
+# x = pos[ind, 0]
+# y = pos[ind, 1]
+# z = pos[ind, 2]
+#
+#
+# ax.scatter(x,y,z, marker='o', s=20, c="goldenrod", alpha=0.6)
+# plt.show()
