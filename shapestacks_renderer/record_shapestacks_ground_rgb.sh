@@ -12,9 +12,9 @@ MJCF_ROOT_DIR="${DATASET_ROOT_DIR}/mjcf"
 RECORD_ROOT_DIR="${DATASET_ROOT_DIR}/recordings"
 
 # recording options
-TIME=3
-FPS=8
-MAX_FRAMES=3
+TIME=1
+FPS=3
+MAX_FRAMES=2
 RES="128 128"
 CAMERAS="cam_1 cam_2 cam_3"
 FORMAT="rgb depth"
@@ -52,6 +52,7 @@ create_params()
 
 # main loop over all simulation environments to record
 # for env_file in `ls ${MJCF_ROOT_DIR} | grep env_ | grep ${FILTER}`; do
+i=0
 for env_file in `ls ${MJCF_ROOT_DIR} | grep env_`; do
   echo "Recording ${env_file%".xml"} ..."
 
@@ -65,4 +66,6 @@ for env_file in `ls ${MJCF_ROOT_DIR} | grep env_`; do
   # echo $params
   # LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libOpenGL.so python record_scenario.py ${params} > ${log_file}
   python record_scenario.py ${params} > ${log_file}
+  i=$(($i+1))
+  echo "File $i"
 done

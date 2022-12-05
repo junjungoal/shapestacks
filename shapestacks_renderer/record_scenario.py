@@ -380,7 +380,8 @@ def _pixel_to_world_coords(pixel_coords, cam_proj_mat_inv):
 def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
                                 camera: str, render_height: int, render_width: int,
                                 world_xml: ET.Element,
-                                depth: np.array):
+                                depth: np.array,
+                                return_pcd=True):
     camera_id = sim.model.camera_name2id(camera)
     fovy = sim.model.cam_fovy[camera_id]
     f = 0.5 * render_height / math.tan(fovy * math.pi / 360)
@@ -408,33 +409,22 @@ def _convert_rgbd_to_pointcloud(sim: mujoco_py.MjSim,
 
 
     real_depth = _convert_depth_to_meters(sim, depth)
-    upc = _create_uniform_pixel_coords_image(real_depth.shape)
-    pc = upc * np.expand_dims(real_depth, -1)
-    C = np.expand_dims(extrinsics[:3, 3], 0).T
-    R = extrinsics[:3, :3]
-    R_inv = R.T  # inverse of rot matrix is transpose
-    R_inv_C = np.matmul(R_inv, C)
-    extrinsics = np.concatenate((R_inv, -R_inv_C), -1)
-    cam_proj_mat = np.matmul(intrinsics, extrinsics)
-    cam_proj_mat_homo = np.concatenate(
-        [cam_proj_mat, [np.array([0, 0, 0, 1])]])
-    cam_proj_mat_inv = np.linalg.inv(cam_proj_mat_homo)[0:3]
-    world_coords_homo = np.expand_dims(_pixel_to_world_coords(
-        pc, cam_proj_mat_inv), 0)
-    world_coords = world_coords_homo[..., :-1][0]
-
-    # x = world_coords[:, :, 0]
-    # y = world_coords[:, :, 1]
-    # z = world_coords[:, :, 2]
-    #
-    # import matplotlib.pyplot as plt
-    # from mpl_toolkits.mplot3d import proj3d
-    #
-    # fig = plt.figure(figsize=(8, 8))
-    # ax = fig.add_subplot(111, projection='3d')
-    #
-    # ax.scatter(x.reshape(-1), y.reshape(-1), z.reshape(-1))
-    # plt.show()
+    world_coords = None
+    if return_pcd:
+        upc = _create_uniform_pixel_coords_image(real_depth.shape)
+        pc = upc * np.expand_dims(real_depth, -1)
+        C = np.expand_dims(extrinsics[:3, 3], 0).T
+        R = extrinsics[:3, :3]
+        R_inv = R.T  # inverse of rot matrix is transpose
+        R_inv_C = np.matmul(R_inv, C)
+        extrinsics = np.concatenate((R_inv, -R_inv_C), -1)
+        cam_proj_mat = np.matmul(intrinsics, extrinsics)
+        cam_proj_mat_homo = np.concatenate(
+            [cam_proj_mat, [np.array([0, 0, 0, 1])]])
+        cam_proj_mat_inv = np.linalg.inv(cam_proj_mat_homo)[0:3]
+        world_coords_homo = np.expand_dims(_pixel_to_world_coords(
+            pc, cam_proj_mat_inv), 0)
+        world_coords = world_coords_homo[..., :-1][0]
 
     return world_coords, real_depth, camera_loc
 
@@ -596,7 +586,7 @@ if __name__ == '__main__':
             #     frame_stereo)
           if modality == 'depth':
             pcd, real_depth, extrinsics = _convert_rgbd_to_pointcloud(sim, camera, render_height,
-                                    render_width, world_xml, frame_mono)
+                                    render_width, world_xml, frame_mono, return_pcd=False)
             pcds[camera].append(pcd)
             real_depth_data[camera].append(real_depth)
             camera_loc[camera] = extrinsics
@@ -618,7 +608,7 @@ if __name__ == '__main__':
   with h5py.File(os.path.join(FLAGS.record_path, 'data.h5'), 'w') as F:
     F['stability'] = not stack_collapsed
     for camera in FLAGS.cameras:
-        F[camera+'/pcd'] = np.array(pcds[camera])
+        # F[camera+'/pcd'] = np.array(pcds[camera])
         F[camera+'/depth'] = np.array(depth[camera])
         F[camera+'/real_depth'] = np.array(real_depth_data[camera])
         F[camera+'/rgb'] = np.array(rgb[camera]).astype(np.uint8)

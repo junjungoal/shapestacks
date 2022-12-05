@@ -92,10 +92,10 @@ ARGPARSER.add_argument(
     '--shapes', type=str, nargs='+', default=['cuboid', 'cylinder', 'sphere'],
     help="The available shapes for stacking.")
 ARGPARSER.add_argument(
-    '--obj_dim_min', type=float, default=0.1,
+    '--obj_dim_min', type=float, default=0.5,
     help="Minimum size per object dimension.")
 ARGPARSER.add_argument(
-    '--obj_dim_max', type=float, default=0.15,
+    '--obj_dim_max', type=float, default=1.0,
     help="Maximum size per object dimension.")
 ARGPARSER.add_argument(
     '--height', type=int, default=6,
@@ -107,13 +107,13 @@ ARGPARSER.add_argument(
     stack). Starting from 1 (bottom object) to height - 1 (second to top \
     object). Index 0 means stable stack.")
 ARGPARSER.add_argument(
-    '--com_scale_min', type=float, default=2.,
+    '--com_scale_min', type=float, default=0.,
     help="Inner radius for COM surface sampling.")
 ARGPARSER.add_argument(
-    '--com_scale_max', type=float, default=3.0,
+    '--com_scale_max', type=float, default=0.5,
     help="Outer radius for COM surface sampling")
 ARGPARSER.add_argument(
-    '--vcom_scale', type=float, default=0.5,
+    '--vcom_scale', type=float, default=0.05,
     help="The absolute offset added to an allowed COM offset during \
     violation.")
 ARGPARSER.add_argument(
@@ -161,27 +161,27 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 3
+PLANE_L = 10
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
-    # 'wall_1',
-    # 'wall_2',
+    'wall_1',
+    'wall_2',
 ]
 PLANE_POSITIONS = [
     (0, 0, 0),                # ground plate
-    # (0, PLANE_L, PLANE_L),    # wall 1
-    # (PLANE_L, 0, PLANE_L),    # wall 2
+    (0, PLANE_L, PLANE_L),    # wall 1
+    (PLANE_L, 0, PLANE_L),    # wall 2
 ]
 PLANE_SIZES = [
     (PLANE_L, PLANE_L, PLANE_H),    # ground plate
-    # (PLANE_L, PLANE_L, PLANE_H),    # wall 1
-    # (PLANE_L, PLANE_L, PLANE_H),    # wall 2
+    (PLANE_L, PLANE_L, PLANE_H),    # wall 1
+    (PLANE_L, PLANE_L, PLANE_H),    # wall 2
 ]
 PLANE_EULERS = [
     (0, 0, 0),      # ground plate
-    # (90, 180, 0),   # wall 1
-    # (270, 0, 90),   # wall 2
+    (90, 180, 0),   # wall 1
+    (270, 0, 90),   # wall 2
 ]
 
 # objects
@@ -196,8 +196,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-# ORIGIN_OFFSET_MAX = 2.0
-ORIGIN_OFFSET_MAX = 0.4
+ORIGIN_OFFSET_MAX = 2.0
 
 # light setup
 LIGHT_POSITIONS = [
@@ -218,27 +217,26 @@ LIGHT_DIRECTIONS = [
 # camera setup
 CAMERA_POSITIONS = [
     # corner 1
-    (-1.05, -1.05, 0.75),   # cam_1: center
-    (-1.35, -0.3, 0.75),   # cam_2: left
-    (-0.3, -1.35, 0.75),   # cam_3: right
+    (-7, -7, 5),   # cam_1: center
+    (-9, -2, 5),   # cam_2: left
+    (-2, -9, 5),   # cam_3: right
     # corner 2
-    (-1.05, 1.05, 0.75),   # cam_4 center
-    (-1.35, 0.3, 0.75),   # cam_5: right
-    (-0.3, 1.35, 0.75),   # cam_6: left
+    (-7, 7, 5),   # cam_4 center
+    (-9, 2, 5),   # cam_5: right
+    (-2, 9, 5),   # cam_6: left
     # corner 3
-    (1.05, 1.05, 0.75),    # cam_7: center
-    (1.35, 0.3, 0.75),    # cam_8: left
-    (0.3, 1.35, 0.75),    # cam_9: right
+    (7, 7, 5),    # cam_7: center
+    (9, 2, 5),    # cam_8: left
+    (2, 9, 5),    # cam_9: right
     # corner 4
-    (1.05, -1.05, 0.75),   # cam_10: center
-    (1.35, -0.3, 0.75),   # cam_11: right
-    (0.3, -1.35, 0.75),   # cam_12: left
+    (7, -7, 5),   # cam_10: center
+    (9, -2, 5),   # cam_11: right
+    (2, -9, 5),   # cam_12: left
     # top
-    (-0.75, -0.75, 1.35),  # cam_13: corner 1
-    (-0.75, 0.75, 1.35),   # cam_14: corner 2
-    (0.75, 0.75, 1.35),    # cam_15: corner 3
-    (0.75, -0.75, 1.35),   # cam_16: corner 4
-    # (0, 1.2, 0.9)
+    (-5, -5, 9),  # cam_13: corner 1
+    (-5, 5, 9),   # cam_14: corner 2
+    (5, 5, 9),    # cam_15: corner 3
+    (5, -5, 9),   # cam_16: corner 4
 ]
 CAMERA_EULERS = [
     # corner 1
@@ -262,7 +260,6 @@ CAMERA_EULERS = [
     (45, 0, 225),
     (45, 0, 135),
     (45, 0, 45),
-    (55, 0, -180),
 ]
 # CAMLIGHT_DIRECTIONS = [
 #     (8, 8, -3),
