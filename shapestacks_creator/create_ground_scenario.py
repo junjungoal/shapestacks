@@ -26,21 +26,22 @@ from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_po
 import torch
 import torch.nn.functional as F
 
-cam_poses, _ = get_sphere_poses(0, 360, 50, 1.4)
+# cam_poses, _ = get_sphere_poses(0, 360, 50, 1.4)
+cam_poses, _ = get_sphere_poses(0, 360, 50, 10)
 pos = cam_poses[:, :3, 3]
-valid_idxs = np.where(pos[:, 2]> 0.)[0]
+valid_idxs = np.where(np.logical_and(pos[:, 2]> 5,pos[:, 2] < 9.))[0]
 
-def ar2ten(array, device, dtype=None):
-    if isinstance(array, list) or isinstance(array, dict):
-        return array
-
-    if isinstance(array, np.ndarray):
-        tensor = torch.from_numpy(array).to(device)
-    else:
-        tensor = torch.tensor(array).to(device)
-    if dtype is not None:
-        tensor = tensor.to(dtype)
-    return tensor
+# def ar2ten(array, device, dtype=None):
+#     if isinstance(array, list) or isinstance(array, dict):
+#         return array
+#
+#     if isinstance(array, np.ndarray):
+#         tensor = torch.from_numpy(array).to(device)
+#     else:
+#         tensor = torch.tensor(array).to(device)
+#     if dtype is not None:
+#         tensor = tensor.to(dtype)
+#     return tensor
 
 def look_at_rotation(camera_position, at=(0, 0, 0), up=(0., 0, 1), device: str = "cpu") -> torch.Tensor:
     # Format input and broadcast
@@ -165,8 +166,8 @@ PLANE_L = 10
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
-    'wall_1',
-    'wall_2',
+    # 'wall_1',
+    # 'wall_2',
 ]
 PLANE_POSITIONS = [
     (0, 0, 0),                # ground plate
@@ -624,9 +625,9 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   #         valid = True
   idx = np.random.choice(valid_idxs)
   pos = cam_poses[idx, :3, 3]
-  mat = look_at_rotation(ar2ten(pos, 'cuda')[None].float())[0].numpy()
-  # rot = R.from_matrix(mat)
-  rot = R.from_dcm(mat)
+  mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
+  rot = R.from_matrix(mat)
+  # rot = R.from_dcm(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)
   cam.pos = MjcfFormat.tuple(pos)
   cam.euler = MjcfFormat.tuple([phi, theta, psi])
