@@ -586,7 +586,7 @@ if __name__ == '__main__':
             #     frame_stereo)
           if modality == 'depth':
             pcd, real_depth, extrinsics = _convert_rgbd_to_pointcloud(sim, camera, render_height,
-                                    render_width, world_xml, frame_mono, return_pcd=False)
+                                    render_width, world_xml, frame_mono, return_pcd=True)
             pcds[camera].append(pcd)
             real_depth_data[camera].append(real_depth)
             camera_loc[camera] = extrinsics
@@ -613,6 +613,7 @@ if __name__ == '__main__':
         F[camera+'/real_depth'] = np.array(real_depth_data[camera])
         F[camera+'/rgb'] = np.array(rgb[camera]).astype(np.uint8)
         F[camera+'/extrinsics'] = np.array(camera_loc[camera])
+        F[camera+'/pcd'] = np.array(pcds[camera])
 
   # print results
   print("Stack collapse: %s" % stack_collapsed)

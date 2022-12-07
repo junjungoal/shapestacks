@@ -27,9 +27,9 @@ import torch
 import torch.nn.functional as F
 
 # cam_poses, _ = get_sphere_poses(0, 360, 50, 1.4)
-cam_poses, _ = get_sphere_poses(0, 360, 50, 10)
+cam_poses, _ = get_sphere_poses(0, 360, 50, 9)
 pos = cam_poses[:, :3, 3]
-valid_idxs = np.where(np.logical_and(pos[:, 2]> 5,pos[:, 2] < 9.))[0]
+valid_idxs = np.where(np.logical_and(pos[:, 2]>6,pos[:, 2] < 8.))[0]
 
 # def ar2ten(array, device, dtype=None):
 #     if isinstance(array, list) or isinstance(array, dict):
@@ -162,7 +162,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 10
+PLANE_L = 20
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -626,8 +626,8 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   idx = np.random.choice(valid_idxs)
   pos = cam_poses[idx, :3, 3]
   mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
-  rot = R.from_matrix(mat)
-  # rot = R.from_dcm(mat)
+  # rot = R.from_matrix(mat)
+  rot = R.from_dcm(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)
   cam.pos = MjcfFormat.tuple(pos)
   cam.euler = MjcfFormat.tuple([phi, theta, psi])

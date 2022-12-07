@@ -8,7 +8,7 @@ echo "Recording ShapeStacks scenarios from MuJoCo."
 # paths
 DATASET_NAME=$1
 DATASET_ROOT_DIR="${SHAPESTACKS_CODE_HOME}/data/${DATASET_NAME}"
-MJCF_ROOT_DIR="${DATASET_ROOT_DIR}/mjcf"
+MJCF_ROOT_DIR="${DATASET_ROOT_DIR}/mjcf_lg"
 RECORD_ROOT_DIR="${DATASET_ROOT_DIR}/recordings"
 
 # recording options
