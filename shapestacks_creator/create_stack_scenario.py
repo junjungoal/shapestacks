@@ -544,7 +544,7 @@ def create_stack(
     # apply offsets
     pos_x = com_x + off_x
     pos_y = com_y + off_y
-    off_z = z/2.
+    off_z = stack_height - z / 2
     pos = (pos_x, pos_y, off_z)
     obj.name = "shape_%s" % (height - i)
     obj.pos = MjcfFormat.tuple(pos)
