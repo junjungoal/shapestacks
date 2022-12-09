@@ -22,14 +22,13 @@ from simulation_builder.mj_elements import MjVelocimeter, MjLight, MjCamera, \
   MjMaterial, MjGeom, MjBody
 from simulation_builder.mj_templates import MjCuboid, MjCylinder, MjSphere, \
   MjCameraHeadlight
-from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_pose_matrix, camera_origin_direction, get_sphere_pose
+from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_pose_matrix, camera_origin_direction, get_sphere_pose, get_circle_pose
 import torch
 import torch.nn.functional as F
 
-# cam_poses, _ = get_sphere_poses(0, 360, 50, 1.4)
-cam_poses, _ = get_sphere_poses(0, 360, 50, 9)
-pos = cam_poses[:, :3, 3]
-valid_idxs = np.where(np.logical_and(pos[:, 2]>6,pos[:, 2] < 8.))[0]
+# cam_poses, _ = get_sphere_poses(0, 360, 50, 9)
+# pos = cam_poses[:, :3, 3]
+# valid_idxs = np.where(np.logical_and(pos[:, 2]>6,pos[:, 2] < 8.))[0]
 
 # def ar2ten(array, device, dtype=None):
 #     if isinstance(array, list) or isinstance(array, dict):
@@ -162,7 +161,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 20
+PLANE_L = 40
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -197,7 +196,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 2.0
+ORIGIN_OFFSET_MAX = 3.5
 
 # light setup
 LIGHT_POSITIONS = [
@@ -617,17 +616,13 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
 
   cam = MjCamera()
   cam.name = "cam_%s" % (cam_id + 1)
-  # idx = np.random.randint(len(cam_poses))
-  # valid = False
-  # while not valid:
-  #     cam_pose = get_sphere_pose(np.random.randint(0, 360), np.random.randint(0, 360), 1.4)
-  #     if cam_pose[2, 3] > 0.8:
-  #         valid = True
-  idx = np.random.choice(valid_idxs)
-  pos = cam_poses[idx, :3, 3]
+  # idx = np.random.choice(valid_idxs)
+  # pos = cam_poses[idx, :3, 3]
+  pos = get_circle_pose(np.random.randint(0, 360), 8.5)[:3, 3]
+  pos = np.array([pos[0], pos[2], 5.])
   mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
-  # rot = R.from_matrix(mat)
-  rot = R.from_dcm(mat)
+  rot = R.from_matrix(mat)
+  # rot = R.from_dcm(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)
   cam.pos = MjcfFormat.tuple(pos)
   cam.euler = MjcfFormat.tuple([phi, theta, psi])
