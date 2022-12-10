@@ -331,8 +331,8 @@ def get_pose_matrix(x: float=0, y: float=0, z: float=0,
     pose : np.array (4, 4)
         pose matrix in homogeneous representation.
     """
-    rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_matrix()
-    # rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_dcm()
+    # rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_matrix()
+    rot = R.from_euler('xyz', [phi, theta, psi], degrees=True).as_dcm()
     trans = np.array([[x, y, z]])
     pose = np.concatenate((np.concatenate((rot, trans.T), axis=1),
                            [[0, 0, 0, 1]]), axis=0)

@@ -26,9 +26,6 @@ from camera import get_sphere_poses, mat2euler, mat2quat, quat2axisangle, get_po
 import torch
 import torch.nn.functional as F
 
-# cam_poses, _ = get_sphere_poses(0, 360, 50, 9)
-# pos = cam_poses[:, :3, 3]
-# valid_idxs = np.where(np.logical_and(pos[:, 2]>6,pos[:, 2] < 8.))[0]
 
 # def ar2ten(array, device, dtype=None):
 #     if isinstance(array, list) or isinstance(array, dict):
@@ -196,7 +193,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 3.5
+ORIGIN_OFFSET_MAX = 2.5
 
 # light setup
 LIGHT_POSITIONS = [
@@ -618,11 +615,11 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   cam.name = "cam_%s" % (cam_id + 1)
   # idx = np.random.choice(valid_idxs)
   # pos = cam_poses[idx, :3, 3]
-  pos = get_circle_pose(np.random.randint(0, 360), 8.5)[:3, 3]
-  pos = np.array([pos[0], pos[2], 5.])
-  mat = look_at_rotation(torch.from_numpy(pos)[None].float())[0].numpy()
-  rot = R.from_matrix(mat)
-  # rot = R.from_dcm(mat)
+  pos = get_circle_pose(np.random.randint(0, 360), 7.0)[:3, 3]
+  pos = np.array([pos[0], pos[2], 4.])
+  mat = look_at_rotation(torch.from_numpy(pos)[None].float(), at=(0, 0, 1.5))[0].numpy()
+  # rot = R.from_matrix(mat)
+  rot = R.from_dcm(mat)
   phi, theta, psi = rot.as_euler('xyz', degrees=True)
   cam.pos = MjcfFormat.tuple(pos)
   cam.euler = MjcfFormat.tuple([phi, theta, psi])
