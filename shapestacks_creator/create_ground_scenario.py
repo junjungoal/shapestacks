@@ -162,16 +162,22 @@ PLANE_L = 40
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
-    # 'wall_1',
-    # 'wall_2',
+    'wall_1',
+    'wall_2',
+    'wall_3',
+    'wall_4',
 ]
 PLANE_POSITIONS = [
     (0, 0, 0),                # ground plate
     (0, PLANE_L, PLANE_L),    # wall 1
     (PLANE_L, 0, PLANE_L),    # wall 2
+    (0, -PLANE_L, PLANE_L),    # wall 1
+    (-PLANE_L, 0, PLANE_L),    # wall 2
 ]
 PLANE_SIZES = [
     (PLANE_L, PLANE_L, PLANE_H),    # ground plate
+    (PLANE_L, PLANE_L, PLANE_H),    # wall 1
+    (PLANE_L, PLANE_L, PLANE_H),    # wall 2
     (PLANE_L, PLANE_L, PLANE_H),    # wall 1
     (PLANE_L, PLANE_L, PLANE_H),    # wall 2
 ]
@@ -179,6 +185,8 @@ PLANE_EULERS = [
     (0, 0, 0),      # ground plate
     (90, 180, 0),   # wall 1
     (270, 0, 90),   # wall 2
+    (-90, 180, 0),   # wall 1
+    (270, 0, -90),   # wall 2
 ]
 
 # objects
