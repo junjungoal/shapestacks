@@ -18,7 +18,7 @@ create_params()
 {
   v=$1
   template_path=${SHAPESTACKS_CODE_HOME}/data/shapestacks_example/mjcf   # $1: model_path
-  export_path=${SHAPESTACKS_CODE_HOME}/data/shapestacks_example/mjcf_3  # $2: record_path
+  export_path=${SHAPESTACKS_CODE_HOME}/data/shapestacks_example/mjcf  # $2: record_path
 
   # randomize light and textures
   height=`python -c "import random; print(random.randint(3,${MAX_HEIGHT}))"`
@@ -46,7 +46,7 @@ create_params()
 
 # main loop over all simulation environments to record
 
-i=4500
+i=0
 while [ $i -ne 6000 ]
 do
         params=$(create_params $i)

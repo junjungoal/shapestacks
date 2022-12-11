@@ -158,7 +158,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 40
+PLANE_L = 20
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
