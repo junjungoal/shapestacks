@@ -18,6 +18,7 @@ import re
 import xml.etree.ElementTree as ET
 import h5py
 import tqdm
+import imageio
 
 import numpy as np
 import scipy.misc
@@ -573,9 +574,12 @@ if __name__ == '__main__':
           frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
               (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
               FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-          scipy.misc.imsave(
+          imageio.imwrite(
               os.path.join(FLAGS.record_path, frame_fn),
               frame_mono)
+          # scipy.misc.imsave(
+          #     os.path.join(FLAGS.record_path, frame_fn),
+          #     frame_mono)
           if FLAGS.with_stereo:
             frame_stereo = np.flip(frame, 0)
             # frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-stereo-%s.%s" % \
