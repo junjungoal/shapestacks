@@ -574,9 +574,9 @@ if __name__ == '__main__':
           frame_fn = "%s-w=%s-f=%s-l=%s-c=%s-%s-mono-%s.%s" % \
               (modality, FLAGS.walltex, FLAGS.floortex, FLAGS.lightid, \
               FLAGS.color_mode, camera, frame_nr, FLAGS.file_format)
-          # imageio.imwrite(
-          #     os.path.join(FLAGS.record_path, frame_fn),
-          #     frame_mono)
+          imageio.imwrite(
+              os.path.join(FLAGS.record_path, frame_fn),
+              frame_mono)
           # scipy.misc.imsave(
           #     os.path.join(FLAGS.record_path, frame_fn),
           #     frame_mono)
