@@ -46,8 +46,8 @@ create_params()
 
 # main loop over all simulation environments to record
 
-i=6000
-while [ $i -ne 12000 ]
+i=0
+while [ $i -ne 6000 ]
 do
         params=$(create_params $i)
         python create_stack_scenario.py ${params}
