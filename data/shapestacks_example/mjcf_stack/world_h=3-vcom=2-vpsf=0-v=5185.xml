@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<world>
+ <worldbody>
+  <geom euler="0 0 0" material="mat_floor_001" name="floor" pos="0 0 0" size="10 10 0.5" type="plane"/>
+  <geom euler="90 180 0" material="mat_wall_001" name="wall_1" pos="0 10 10" size="10 10 0.5" type="plane"/>
+  <geom euler="270 0 90" material="mat_wall_001" name="wall_2" pos="10 0 10" size="10 10 0.5" type="plane"/>
+  <geom euler="-90 180 0" material="mat_wall_001" name="wall_3" pos="0 -10 10" size="10 10 0.5" type="plane"/>
+  <geom euler="270 0 -90" material="mat_wall_001" name="wall_4" pos="-10 0 10" size="10 10 0.5" type="plane"/>
+  <body euler="0 0 205" pos="-0.25969149995803686 -0.3205006084236258 1.672967618728361">
+   <freejoint/>
+   <geom condim="6" density="20" euler="0 0 0" friction="1 0.01 0.1" name="shape_3" pos="0 0 0" rgba="0 0 1 1" size="0.26988629032974515 0.31320383058748946 0.3307367492128995" type="box"/>
+   <body>
+    <site name="sensor_site_velo_collapse" pos="0 0 0" size="0.01"/>
+   </body>
+  </body>
+  <body euler="0 0 41" pos="-0.6686066154423511 -0.22807986315737855 1.0138005586752172">
+   <freejoint/>
+   <geom condim="6" density="20" euler="0 0 0" friction="1 0.01 0.1" name="shape_2" pos="0 0 0" rgba="1 1 0 1" size="0.29483296399807035 0.2880232754679456 0.3284303108402444" type="box"/>
+  </body>
+  <body euler="0 0 81" pos="-0.5730309010495109 -0.3018680519092282 0.3426851239174864">
+   <freejoint/>
+   <geom condim="6" density="20" euler="0 0 0" friction="1 0.01 0.1" name="shape_1" pos="0 0 0" rgba="0 1 0 1" size="0.2626313506607094 0.2887710260158809 0.3426851239174865" type="box"/>
+  </body>
+  <light castshadow="false" dir="0 0 -20" directional="true" mode="fixed" name="light_0" pos="0 0 20"/>
+  <light castshadow="false" dir="9 9 -20" directional="true" mode="fixed" name="light_1" pos="-9 -9 20"/>
+  <light castshadow="false" dir="9 -9 -20" directional="true" mode="fixed" name="light_2" pos="-9 9 20"/>
+  <light castshadow="false" dir="-9 -9 -20" directional="true" mode="fixed" name="light_3" pos="9 9 20"/>
+  <light castshadow="false" dir="-9 9 -20" directional="true" mode="fixed" name="light_4" pos="9 -9 20"/>
+  <camera euler="35.00000262187588 -1.601815744282953e-06 -116.99999937019187" fovy="45" mode="fixed" name="cam_1" pos="-3.321892254911726 1.6925886443559583 5.324488287878446"/>
+  <camera euler="35.00000087209872 -6.706274606956307e-07 -103.99999954859337" fovy="45" mode="fixed" name="cam_2" pos="-3.6175019717462353 0.9019445418967574 5.324488287878446"/>
+  <camera euler="6.0000002475951115 -3.2073598874301423e-07 -94.9999986725739" fovy="45" mode="fixed" name="cam_3" pos="-0.6768495558949427 0.05921666305336377 6.4643923198937765"/>
+ </worldbody>
+ <sensor>
+  <velocimeter name="velo_collapse" site="sensor_site_velo_collapse"/>
+ </sensor>
+</world>
