@@ -158,7 +158,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 20
+PLANE_L = 10
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -623,8 +623,10 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   cam.name = "cam_%s" % (cam_id + 1)
   # idx = np.random.choice(valid_idxs)
   # pos = cam_poses[idx, :3, 3]
-  pos = get_circle_pose(np.random.randint(0, 360), 5)[:3, 3]
-  pos = np.array([pos[0], pos[2], 4.8])
+  # pos = get_circle_pose(np.random.randint(0, 360), 5)[:3, 3]
+  pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 6.5)[:3, 3]
+  # pos = np.array([pos[0], pos[2], 4.8])
+  pos = np.array([pos[0], pos[2], pos[1]])
   mat = look_at_rotation(torch.from_numpy(pos)[None].float(), at=(0, 0, 0))[0].numpy()
   rot = R.from_matrix(mat)
   # rot = R.from_dcm(mat)

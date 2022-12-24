@@ -385,15 +385,15 @@ def mat2euler(rmat, axes="sxyz"):
         ax, az = az, ax
     return vec((ax, ay, az))
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-poses, angles = get_circle_poses(0, 360, 50, 1.0)
+# fig = plt.figure()
+# ax = fig.add_subplot(projection='3d')
+# poses, angles = get_circle_poses(0, 360, 50, 1.0)
+# poses, angles = get_sphere_poses(0, 180, 50, 1.0)
 # #
-pos = poses[:, :3, 3]
-x = pos[:, 0]
-y = pos[:, 2]
-z = pos[:, 1]
-# ind = np.where(pos[:, 1]>0.1)[0]
+# pos = poses[:, :3, 3]
+# x = pos[:, 0]
+# y = pos[:, 2]
+# z = pos[:, 1] + 0.1
 # x = pos[ind, 0]
 # y = pos[ind, 2]
 # z = pos[ind, 1]
