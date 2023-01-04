@@ -82,10 +82,10 @@ ARGPARSER.add_argument(
     '--shapes', type=str, nargs='+', default=['cuboid', 'cylinder', 'sphere'],
     help="The available shapes for stacking.")
 ARGPARSER.add_argument(
-    '--obj_dim_min', type=float, default=0.15,
+    '--obj_dim_min', type=float, default=0.1,
     help="Minimum size per object dimension.")
 ARGPARSER.add_argument(
-    '--obj_dim_max', type=float, default=0.25,
+    '--obj_dim_max', type=float, default=0.2,
     help="Maximum size per object dimension.")
 ARGPARSER.add_argument(
     '--height', type=int, default=6,
@@ -100,7 +100,7 @@ ARGPARSER.add_argument(
     '--com_scale_min', type=float, default=0.,
     help="Inner radius for COM surface sampling.")
 ARGPARSER.add_argument(
-    '--com_scale_max', type=float, default=0.1,
+    '--com_scale_max', type=float, default=0.05,
     help="Outer radius for COM surface sampling")
 ARGPARSER.add_argument(
     '--vcom_scale', type=float, default=0.05,
@@ -151,7 +151,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 3.5
+PLANE_L = 2.5
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -194,7 +194,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 0.25
+ORIGIN_OFFSET_MAX = 0.15
 
 # light setup
 LIGHT_POSITIONS = [
@@ -336,8 +336,8 @@ def _create_cuboid():
   len_y = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   len_z = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   obj.set_size(len_x, len_y, len_z)
-  obj.density = '20'
-  obj.friction = '1 0.01 0.1'
+  obj.density = '50'
+  obj.friction = '1 0.01 0.15'
   return obj
 
 def _create_cylinder():
@@ -345,16 +345,16 @@ def _create_cylinder():
   len_r = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max) / 2
   len_h = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max)
   obj.set_size(len_r, len_h)
-  obj.friction = '1 0.01 0.1'
-  obj.density = '20'
+  obj.friction = '1 0.01 0.15'
+  obj.density = '50'
   return obj
 
 def _create_sphere():
   obj = MjSphere()
   len_r = random.uniform(FLAGS.obj_dim_min, FLAGS.obj_dim_max) / 2
   obj.set_size(len_r)
-  obj.friction = '1 0.01 0.1'
-  obj.density = '20'
+  obj.friction = '1 0.01 0.15'
+  obj.density = '50'
   return obj
 
 def create_stack(
@@ -623,8 +623,8 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   # pos = get_circle_pose(np.random.randint(0, 360), 5.)[:3, 3]
   valid = False
   while not valid:
-      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 2.25)[:3, 3]
-      valid = pos[1] > 0.15
+      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 1.75)[:3, 3]
+      valid = pos[1] > 0.25 and pos[1] < 1.2
   # pos = np.array([pos[0], pos[2], 4.8])
   pos = np.array([pos[0], pos[2], pos[1]])
   mat = look_at_rotation(torch.from_numpy(pos)[None].float(), at=(0, 0, 0.0))[0].numpy()

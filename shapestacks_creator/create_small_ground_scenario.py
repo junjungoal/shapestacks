@@ -92,10 +92,10 @@ ARGPARSER.add_argument(
     '--shapes', type=str, nargs='+', default=['cuboid', 'cylinder', 'sphere'],
     help="The available shapes for stacking.")
 ARGPARSER.add_argument(
-    '--obj_dim_min', type=float, default=0.3,
+    '--obj_dim_min', type=float, default=0.1,
     help="Minimum size per object dimension.")
 ARGPARSER.add_argument(
-    '--obj_dim_max', type=float, default=0.4,
+    '--obj_dim_max', type=float, default=0.2,
     help="Maximum size per object dimension.")
 ARGPARSER.add_argument(
     '--height', type=int, default=6,
@@ -161,7 +161,7 @@ ARGPARSER.add_argument(
 # CONSTANTS
 
 # static world geometry
-PLANE_L = 3.5
+PLANE_L = 2.5
 PLANE_H = 0.5
 PLANE_NAMES = [
     'floor',
@@ -204,7 +204,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 0.9
+ORIGIN_OFFSET_MAX = 0.45
 
 # light setup
 LIGHT_POSITIONS = [
@@ -629,8 +629,8 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   # pos = get_circle_pose(np.random.randint(0, 360), 5)[:3, 3]
   valid = False
   while not valid:
-      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 4.)[:3, 3]
-      valid = pos[1] > 0.2
+      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 1.75)[:3, 3]
+      valid = pos[1] > 0.25 and pos[1] < 1.25
   # pos = np.array([pos[0], pos[2], 4.8])
   pos = np.array([pos[0], pos[2], pos[1]])
   mat = look_at_rotation(torch.from_numpy(pos)[None].float(), at=(0, 0, 0))[0].numpy()
