@@ -92,10 +92,10 @@ ARGPARSER.add_argument(
     '--shapes', type=str, nargs='+', default=['cuboid', 'cylinder', 'sphere'],
     help="The available shapes for stacking.")
 ARGPARSER.add_argument(
-    '--obj_dim_min', type=float, default=0.15,
+    '--obj_dim_min', type=float, default=0.3,
     help="Minimum size per object dimension.")
 ARGPARSER.add_argument(
-    '--obj_dim_max', type=float, default=0.25,
+    '--obj_dim_max', type=float, default=0.4,
     help="Maximum size per object dimension.")
 ARGPARSER.add_argument(
     '--height', type=int, default=6,
@@ -204,7 +204,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 0.5
+ORIGIN_OFFSET_MAX = 0.9
 
 # light setup
 LIGHT_POSITIONS = [
@@ -629,8 +629,8 @@ def create_camera(wb: MjWorldBuilder, cam_id: int, with_headlight: bool = False)
   # pos = get_circle_pose(np.random.randint(0, 360), 5)[:3, 3]
   valid = False
   while not valid:
-      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 2.25)[:3, 3]
-      valid = pos[1] > 0.15
+      pos = get_sphere_pose(np.random.randint(0, 180), np.random.randint(0, 180), 4.)[:3, 3]
+      valid = pos[1] > 0.2
   # pos = np.array([pos[0], pos[2], 4.8])
   pos = np.array([pos[0], pos[2], pos[1]])
   mat = look_at_rotation(torch.from_numpy(pos)[None].float(), at=(0, 0, 0))[0].numpy()
@@ -706,7 +706,7 @@ if __name__ == '__main__':
   else:
     cam_id_list = FLAGS.camids
   # for cam_id in cam_id_list:
-  for cam_id in range(3):
+  for cam_id in range(5):
     create_camera(wb, cam_id, FLAGS.camlights_on)
 
   # export

@@ -50,7 +50,7 @@ i=0
 while [ $i -ne 6000 ]
 do
         params=$(create_params $i)
-        python create_stack_scenario.py ${params}
+        python create_small_stack_scenario.py ${params}
         i=$(($i+1))
         echo "File $i"
 done

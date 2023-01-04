@@ -194,7 +194,7 @@ OBJ_COLORS_RGBA = [
 
 # stack
 STACK_ORIGIN = (0.0, 0.0)
-ORIGIN_OFFSET_MAX = 0.3
+ORIGIN_OFFSET_MAX = 0.25
 
 # light setup
 LIGHT_POSITIONS = [
@@ -700,7 +700,7 @@ if __name__ == '__main__':
   else:
     cam_id_list = FLAGS.camids
   # for cam_id in cam_id_list:
-  for cam_id in range(3):
+  for cam_id in range(5):
     create_camera(wb, cam_id, FLAGS.camlights_on)
 
   # export
